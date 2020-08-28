@@ -11,10 +11,13 @@ class Trajectory:
     q_vec = None
     t_vec = None
 
-    def __init__(self, t_vec=None, p_vec=None, q_vec=None):
-        self.t_vec = t_vec
-        self.p_vec = p_vec
-        self.q_vec = q_vec
+    def __init__(self, t_vec=None, p_vec=None, q_vec=None, df=None):
+        if df:
+            self.load_from_data_frame(df)
+        else:
+            self.t_vec = t_vec
+            self.p_vec = p_vec
+            self.q_vec = q_vec
 
     def load_from_CSV(self, filename, sep='\s+|\,', comment='#',
                       header=['t', 'tx', 'ty', 'tz', 'qx', 'qy', 'qz', 'qw']):
@@ -23,8 +26,11 @@ class Trajectory:
             return False
 
         df = TUMCSV2DataFrame.load_TUM_CSV(filename=filename, sep=sep, comment=comment, header=header)
-        self.t_vec, self.p_vec, self.q_vec = TUMCSV2DataFrame.data_frame_to_tpq(data_frame=df)
+        self.load_from_data_frame(df)
         return True
+
+    def load_from_data_frame(self, df):
+        self.t_vec, self.p_vec, self.q_vec = TUMCSV2DataFrame.data_frame_to_tpq(data_frame=df)
 
     def save_to_CSV(self, filename):
         if self.is_empty():
