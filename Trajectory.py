@@ -42,6 +42,9 @@ class Trajectory:
     def get_accumulated_distances(self):
         return Trajectory.get_distances_from_start(self.p_vec)
 
+    def plot(self):
+        assert (False)
+
     @staticmethod
     def get_distances_from_start(p_vec):
         distances = np.diff(p_vec[:, 0:3], axis=0)
@@ -89,7 +92,6 @@ class Trajectory_Test(unittest.TestCase):
                                [3]])
         saved = traj.save_to_CSV('/home/jungr/workspace/NAV/development/aaunav_data_analysis_py/test/example/empty.csv')
         self.assertTrue(saved)
-
 
     def test_get_distance_from_start(self):
         p_vec = np.array([[0, 0, 0],
