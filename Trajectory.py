@@ -22,7 +22,7 @@ class Trajectory:
     def load_from_CSV(self, filename, sep='\s+|\,', comment='#',
                       header=['t', 'tx', 'ty', 'tz', 'qx', 'qy', 'qz', 'qw']):
         if not os.path.isfile(filename):
-            print("could not find trajectory file %s" % filename)
+            print("Trajectory: could not find file %s" % os.path.abspath(filename))
             return False
 
         df = TUMCSV2DataFrame.load_TUM_CSV(filename=filename, sep=sep, comment=comment, header=header)
@@ -45,11 +45,24 @@ class Trajectory:
     def is_empty(self):
         return self.t_vec is None
 
+    def num_elems(self):
+        if self.is_empty():
+            return 0
+        else:
+            return len(self.t_vec)
+
     def get_distance(self):
         return Trajectory.get_distance(self.p_vec)
 
     def get_accumulated_distances(self):
         return Trajectory.get_distances_from_start(self.p_vec)
+
+    def get_rpy_vec(self):
+        rpy_vec = np.zeros(np.shape(self.p_vec))
+        for i in range(np.shape(self.p_vec)[0]):
+            rpy_vec[i, :] = tf.euler_from_quaternion(self.q_vec[i, :], 'rzyx')
+
+        return rpy_vec
 
     def plot(self):
         assert (False)
@@ -94,10 +107,15 @@ import math
 
 
 class Trajectory_Test(unittest.TestCase):
-    def test_load_trajectory_from_CSV(self):
+    def load_trajectory_from_CSV(self):
         print('loading...')
         traj = Trajectory()
-        traj.load_from_CSV(filename='/home/jungr/workspace/NAV/development/aaunav_data_analysis_py/test/example/gt.csv')
+        traj.load_from_CSV(filename='../test/example/gt.csv')
+        return traj
+
+    def test_load_trajectory_from_CSV(self):
+        traj = self.load_trajectory_from_CSV()
+        self.assertTrue(traj.num_elems() > 0)
 
     def test_save_to_CSV(self):
         traj = Trajectory()
@@ -145,6 +163,12 @@ class Trajectory_Test(unittest.TestCase):
         d = Trajectory.get_distance(p_vec)
         d_ = math.sqrt(9 + 9 + 9)
         self.assertTrue(math.floor(d - d_) == 0)
+
+    def test_get_rpy_vec(self):
+        traj = self.load_trajectory_from_CSV()
+        rpy_vec = traj.get_rpy_vec()
+        self.assertTrue(rpy_vec.shape[0] == traj.num_elems())
+        self.assertTrue(rpy_vec.shape[1] == 3)
 
 
 if __name__ == "__main__":
