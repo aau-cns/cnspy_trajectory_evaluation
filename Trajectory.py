@@ -2,7 +2,7 @@
 
 import os
 import numpy as np
-
+import transformations as tf
 from tum_eval.TUMCSV2DataFrame import TUMCSV2DataFrame
 
 
@@ -52,6 +52,24 @@ class Trajectory:
         return Trajectory.get_distances_from_start(self.p_vec)
 
     def plot(self):
+        assert (False)
+
+    def transform_p(self, scale=1.0, t=np.zeros((3,)), R=np.identity(3)):
+        p_es_aligned = np.zeros(np.shape(self.p_vec))
+        q_es_aligned = np.zeros(np.shape(self.q_vec))
+        for i in range(np.shape(self.p_vec)[0]):
+            p_es_aligned[i, :] = R.dot(scale * self.p_vec[i, :]) + t
+            q_es_R = R.dot(tf.quaternion_matrix(self.q_vec[i, :])[0:3, 0:3])
+            q_es_T = np.identity(4)
+            q_es_T[0:3, 0:3] = q_es_R
+            q_es_aligned[i, :] = tf.quaternion_from_matrix(q_es_T)
+
+        # self.p_vec = R * (scale * self.p_vec) + t
+
+        self.p_vec = p_es_aligned
+        self.q_vec = q_es_aligned
+
+    def transform_q(self, R=np.identity(3)):
         assert (False)
 
     @staticmethod
