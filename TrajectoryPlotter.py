@@ -66,19 +66,6 @@ class TrajectoryPlotter:
 
         self.config = config
 
-    @staticmethod
-    def plot_n_dim(ax, x_linespace, values,
-                   colors=['r', 'g', 'b'],
-                   labels=['x', 'y', 'z']):
-        assert len(colors) == len(labels)
-        if len(colors) > 1:
-            assert len(colors) == values.shape[1]
-            for i in range(len(colors)):
-                ax.plot(x_linespace, values[:, i],
-                        colors[i] + '-', label=labels[i])
-        else:
-            ax.plot(x_linespace, values, colors[0] + '-', label=labels[0])
-
     def get_pos_data(self, cfg):
         data_dict = TUMCSV2DataFrame.DataFrame_to_numpy_dict(self.traj_df)
         ts = data_dict['t']
@@ -148,7 +135,20 @@ class TrajectoryPlotter:
 
         return ts, rs, ps, ys, dist_vec
 
-    def plot_pos(self, ax, cfg):
+    @staticmethod
+    def ax_plot_n_dim(ax, x_linespace, values,
+                      colors=['r', 'g', 'b'],
+                      labels=['x', 'y', 'z']):
+        assert len(colors) == len(labels)
+        if len(colors) > 1:
+            assert len(colors) == values.shape[1]
+            for i in range(len(colors)):
+                ax.plot(x_linespace, values[:, i],
+                        colors[i] + '-', label=labels[i])
+        else:
+            ax.plot(x_linespace, values, colors[0] + '-', label=labels[0])
+
+    def ax_plot_pos(self, ax, cfg):
         ts, xs, ys, zs, dist_vec = self.get_pos_data(cfg)
 
         if cfg.plot_type == TrajectoryPlotTypes.plot_2D_over_dist:
@@ -161,13 +161,13 @@ class TrajectoryPlotter:
         ax.set_ylabel('position [m]')
 
         if len(xs):
-            TrajectoryPlotter.plot_n_dim(ax, linespace, xs, colors=['r'], labels=['x'])
+            TrajectoryPlotter.ax_plot_n_dim(ax, linespace, xs, colors=['r'], labels=['x'])
         if len(ys):
-            TrajectoryPlotter.plot_n_dim(ax, linespace, ys, colors=['g'], labels=['y'])
+            TrajectoryPlotter.ax_plot_n_dim(ax, linespace, ys, colors=['g'], labels=['y'])
         if len(zs):
-            TrajectoryPlotter.plot_n_dim(ax, linespace, zs, colors=['b'], labels=['z'])
+            TrajectoryPlotter.ax_plot_n_dim(ax, linespace, zs, colors=['b'], labels=['z'])
 
-    def plot_rpy(self, ax, cfg):
+    def ax_plot_rpy(self, ax, cfg):
         ts, xs, ys, zs, dist_vec = self.get_rpy_data(cfg)
 
         if cfg.plot_type == TrajectoryPlotTypes.plot_2D_over_dist:
@@ -184,13 +184,13 @@ class TrajectoryPlotter:
             ax.set_ylabel('rotation [deg]')
 
         if len(xs):
-            TrajectoryPlotter.plot_n_dim(ax, linespace, xs, colors=['r'], labels=['x'])
+            TrajectoryPlotter.ax_plot_n_dim(ax, linespace, xs, colors=['r'], labels=['x'])
         if len(ys):
-            TrajectoryPlotter.plot_n_dim(ax, linespace, ys, colors=['g'], labels=['y'])
+            TrajectoryPlotter.ax_plot_n_dim(ax, linespace, ys, colors=['g'], labels=['y'])
         if len(zs):
-            TrajectoryPlotter.plot_n_dim(ax, linespace, zs, colors=['b'], labels=['z'])
+            TrajectoryPlotter.ax_plot_n_dim(ax, linespace, zs, colors=['b'], labels=['z'])
 
-    def plot_q(self, ax, cfg):
+    def ax_plot_q(self, ax, cfg):
         q_vec = self.traj_obj.q_vec
         if cfg.plot_type == TrajectoryPlotTypes.plot_2D_over_dist:
             x_linespace = self.traj_obj.get_accumulated_distances()
@@ -201,30 +201,10 @@ class TrajectoryPlotter:
             ax.set_xlabel('rel. time [sec]')
         ax.set_ylabel('quaternion')
 
-        TrajectoryPlotter.plot_n_dim(ax, x_linespace, q_vec, colors=['r', 'g', 'b', 'k'],
-                                     labels=['qx', 'qy', 'qz', 'qw'])
+        TrajectoryPlotter.ax_plot_n_dim(ax, x_linespace, q_vec, colors=['r', 'g', 'b', 'k'],
+                                        labels=['qx', 'qy', 'qz', 'qw'])
 
-    def plot_pose(self, fig=None, cfg=None, angles=False):
-        if cfg is None:
-            cfg = self.config
-
-        if fig is None:
-            fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
-
-        ax1 = fig.add_subplot(211)
-        self.plot_pos(ax=ax1, cfg=cfg)
-        ax2 = fig.add_subplot(212)
-
-        if angles:
-            self.plot_rpy(ax=ax2, cfg=cfg)
-        else:
-            self.plot_q(ax=ax2, cfg=cfg)
-
-        TrajectoryPlotter.show_save_figure(cfg, fig)
-
-        return fig, ax1, ax2
-
-    def plot_pos_3D(self, ax, cfg=None, label="trajectory"):
+    def ax_plot_pos_3D(self, ax, cfg=None, label="trajectory"):
         if cfg is None:
             cfg = self.config
 
@@ -235,12 +215,34 @@ class TrajectoryPlotter:
         elif cfg.plot_type == TrajectoryPlotTypes.plot_3D:
             ax.plot3D(xs, ys, zs, label=str(label))
 
-    def plot_3D(self, cfg=None, ax=None, fig=None):
+    def plot_pose(self, fig=None, cfg=None, angles=False):
         if cfg is None:
             cfg = self.config
 
-        if (ax is None) or (fig is None):
+        if fig is None:
             fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
+
+        ax1 = fig.add_subplot(211)
+        self.ax_plot_pos(ax=ax1, cfg=cfg)
+        ax2 = fig.add_subplot(212)
+
+        if angles:
+            self.ax_plot_rpy(ax=ax2, cfg=cfg)
+        else:
+            self.ax_plot_q(ax=ax2, cfg=cfg)
+
+        TrajectoryPlotter.show_save_figure(cfg, fig)
+
+        return fig, ax1, ax2
+
+    def plot_3D(self, fig=None, ax=None, cfg=None):
+        if cfg is None:
+            cfg = self.config
+
+        if fig is None:
+            fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
+
+        if ax is None:
             ax = fig.add_subplot(111, projection='3d')
 
         if cfg.title:
@@ -251,7 +253,7 @@ class TrajectoryPlotter:
             else:
                 ax.set_title("Plot3D")
 
-        self.plot_pos_3D(ax=ax, cfg=cfg)
+        self.ax_plot_pos_3D(ax=ax, cfg=cfg)
 
         ax.legend(shadow=True, fontsize='x-small')
         ax.grid()
@@ -275,7 +277,7 @@ class TrajectoryPlotter:
 
         idx = 0
         for traj in traj_plotter_list:
-            traj.plot_pos_3D(ax=ax, label=name_list[idx])
+            traj.ax_plot_pos_3D(ax=ax, label=name_list[idx])
             idx += 1
 
         ax.legend(shadow=True, fontsize='x-small')
@@ -303,14 +305,14 @@ class TrajectoryPlotter:
         ax3 = fig.add_subplot(223)
         ax4 = fig.add_subplot(224)
 
-        plotter_est.plot_pos(ax=ax1, cfg=cfg)
-        plotter_err.plot_pos(ax=ax2, cfg=cfg)
+        plotter_est.ax_plot_pos(ax=ax1, cfg=cfg)
+        plotter_err.ax_plot_pos(ax=ax2, cfg=cfg)
         ax1.set_ylabel('position est [m]')
         ax2.set_ylabel('position err [m]')
 
         if angles:
-            plotter_est.plot_rpy(ax=ax3, cfg=cfg)
-            plotter_err.plot_rpy(ax=ax4, cfg=cfg)
+            plotter_est.ax_plot_rpy(ax=ax3, cfg=cfg)
+            plotter_err.ax_plot_rpy(ax=ax4, cfg=cfg)
             if cfg.radians:
                 ax3.set_ylabel('rotation est [rad]')
                 ax4.set_ylabel('rotation err [rad]')
@@ -318,13 +320,13 @@ class TrajectoryPlotter:
                 ax3.set_ylabel('rotation est [deg]')
                 ax4.set_ylabel('rotation err [deg]')
         else:
-            plotter_est.plot_q(ax=ax3, cfg=cfg)
-            plotter_err.plot_q(ax=ax4, cfg=cfg)
+            plotter_est.ax_plot_q(ax=ax3, cfg=cfg)
+            plotter_err.ax_plot_q(ax=ax4, cfg=cfg)
             ax4.set_ylabel('quaternion err')
 
         TrajectoryPlotter.show_save_figure(cfg, fig)
 
-        return fig, ax1, ax2
+        return fig, ax1, ax2, ax3, ax4
 
     @staticmethod
     def show_save_figure(cfg, fig):

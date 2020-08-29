@@ -54,22 +54,23 @@ class AbsoluteTrajectoryError:
         self.traj_est = traj_est
 
     def plot_pose_err(self, cfg=TrajectoryPlotConfig(), angles=False):
-        TrajectoryPlotter.plot_pose_err(TrajectoryPlotter(traj_obj=self.traj_est, config=cfg),
-                                        TrajectoryPlotter(traj_obj=self.traj_err, config=cfg), cfg=cfg,
-                                        angles=angles)
+        return TrajectoryPlotter.plot_pose_err(TrajectoryPlotter(traj_obj=self.traj_est, config=cfg),
+                                               TrajectoryPlotter(traj_obj=self.traj_err, config=cfg), cfg=cfg,
+                                               angles=angles)
 
     def plot_p_err(self, cfg=TrajectoryPlotConfig(), fig=None, ax=None):
         plotter = TrajectoryPlotter(traj_obj=self.traj_err, config=cfg)
 
+        if fig is None:
+            fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
         if ax is None:
-            if fig is None:
-                fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
             ax = fig.add_subplot(111)
-        plotter.plot_pos(ax=ax, cfg=cfg)
+
+        plotter.ax_plot_pos(ax=ax, cfg=cfg)
         ax.set_ylabel('position err [m]')
 
         TrajectoryPlotter.show_save_figure(cfg, fig)
-        return plotter
+        return fig, ax, plotter
 
     def plot_rpy_err(self, cfg=TrajectoryPlotConfig(), fig=None, ax=None):
         plotter = TrajectoryPlotter(traj_obj=self.traj_err, config=cfg)
@@ -78,14 +79,14 @@ class AbsoluteTrajectoryError:
             if fig is None:
                 fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
             ax = fig.add_subplot(111)
-        plotter.plot_rpy(ax=ax, cfg=cfg)
+        plotter.ax_plot_rpy(ax=ax, cfg=cfg)
         if cfg.radians:
             ax.set_ylabel('rotation err [rad]')
         else:
             ax.set_ylabel('rotation err [deg]')
 
         TrajectoryPlotter.show_save_figure(cfg, fig)
-        return plotter
+        return fig, ax, plotter
 
     @staticmethod
     def compute_absolute_error(p_est, q_est, p_gt, q_gt):
