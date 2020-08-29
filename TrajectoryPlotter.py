@@ -31,10 +31,11 @@ class TrajectoryPlotConfig():
     result_dir = "."
     show = True
     close_figure = False
+    radians = True
 
     def __init__(self, white_list=[], num_points=[],
                  plot_type=TrajectoryPlotTypes.plot_3D, dpi=200, title="",
-                 scale=1.0, save_fn="", result_dir=".", show=True, close_figure=False):
+                 scale=1.0, save_fn="", result_dir=".", show=True, close_figure=False, radians=True):
         self.white_list = white_list
         self.num_points = num_points
         self.plot_type = plot_type
@@ -45,6 +46,7 @@ class TrajectoryPlotConfig():
         self.result_dir = result_dir
         self.show = show
         self.close_figure = close_figure
+        self.radians = radians
 
 
 class TrajectoryPlotter:
@@ -112,11 +114,11 @@ class TrajectoryPlotter:
 
         return ts, xs, ys, zs, dist_vec
 
-    def get_rpy_data(self, cfg, in_radians=True):
+    def get_rpy_data(self, cfg):
         rpy_vec = self.traj_obj.get_rpy_vec()
 
         rpy_vec = np.unwrap(rpy_vec, axis=0)
-        if not in_radians:
+        if not cfg.radians:
             rpy_vec = np.rad2deg(rpy_vec)
 
         ts = self.traj_obj.t_vec
@@ -165,8 +167,8 @@ class TrajectoryPlotter:
         if len(zs):
             TrajectoryPlotter.plot_n_dim(ax, linespace, zs, colors=['b'], labels=['z'])
 
-    def plot_rpy(self, ax, cfg, in_radians=True):
-        ts, xs, ys, zs, dist_vec = self.get_rpy_data(cfg, in_radians=in_radians)
+    def plot_rpy(self, ax, cfg):
+        ts, xs, ys, zs, dist_vec = self.get_rpy_data(cfg)
 
         if cfg.plot_type == TrajectoryPlotTypes.plot_2D_over_dist:
             linespace = dist_vec
@@ -176,7 +178,7 @@ class TrajectoryPlotter:
             linespace = ts
             ax.set_xlabel('rel. time [sec]')
 
-        if in_radians:
+        if cfg.radians:
             ax.set_ylabel('rotation [rad]')
         else:
             ax.set_ylabel('rotation [deg]')
@@ -202,7 +204,7 @@ class TrajectoryPlotter:
         TrajectoryPlotter.plot_n_dim(ax, x_linespace, q_vec, colors=['r', 'g', 'b', 'k'],
                                      labels=['qx', 'qy', 'qz', 'qw'])
 
-    def plot_pose(self, fig=None, cfg=None, angles=False, in_radians=True):
+    def plot_pose(self, fig=None, cfg=None, angles=False):
         if cfg is None:
             cfg = self.config
 
@@ -214,20 +216,11 @@ class TrajectoryPlotter:
         ax2 = fig.add_subplot(212)
 
         if angles:
-            self.plot_rpy(ax=ax2, cfg=cfg, in_radians=in_radians)
+            self.plot_rpy(ax=ax2, cfg=cfg)
         else:
             self.plot_q(ax=ax2, cfg=cfg)
 
-        plt.draw()
-        plt.pause(0.001)
-        if cfg.save_fn:
-            filename = os.path.join(cfg.result_dir, cfg.save_fn)
-            print("save to file: " + filename)
-            plt.savefig(filename, dpi=int(cfg.dpi))
-        if cfg.show:
-            plt.show()
-        if cfg.close_figure:
-            plt.close(fig)
+        TrajectoryPlotter.show_save_figure(cfg, fig)
 
         return fig, ax1, ax2
 
@@ -265,17 +258,8 @@ class TrajectoryPlotter:
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlabel('z')
-        plt.draw()
-        plt.pause(0.001)
 
-        if cfg.save_fn:
-            filename = os.path.join(cfg.result_dir, cfg.save_fn)
-            print("save to file: " + filename)
-            plt.savefig(filename, dpi=int(cfg.dpi))
-        if cfg.show:
-            plt.show()
-        if cfg.close_figure:
-            plt.close(fig)
+        TrajectoryPlotter.show_save_figure(cfg, fig)
 
         return fig, ax
 
@@ -302,6 +286,50 @@ class TrajectoryPlotter:
         plt.draw()
         plt.pause(0.001)
 
+        TrajectoryPlotter.show_save_figure(cfg, fig)
+
+        return fig, ax
+
+    @staticmethod
+    def plot_pose_err(plotter_est, plotter_err, fig=None, cfg=None, angles=False):
+        if cfg is None:
+            cfg = plotter_est.config
+
+        if fig is None:
+            fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
+
+        ax1 = fig.add_subplot(221)
+        ax2 = fig.add_subplot(222)
+        ax3 = fig.add_subplot(223)
+        ax4 = fig.add_subplot(224)
+
+        plotter_est.plot_pos(ax=ax1, cfg=cfg)
+        plotter_err.plot_pos(ax=ax2, cfg=cfg)
+        ax1.set_ylabel('position est [m]')
+        ax2.set_ylabel('position err [m]')
+
+        if angles:
+            plotter_est.plot_rpy(ax=ax3, cfg=cfg)
+            plotter_err.plot_rpy(ax=ax4, cfg=cfg)
+            if cfg.radians:
+                ax3.set_ylabel('rotation est [rad]')
+                ax4.set_ylabel('rotation err [rad]')
+            else:
+                ax3.set_ylabel('rotation est [deg]')
+                ax4.set_ylabel('rotation err [deg]')
+        else:
+            plotter_est.plot_q(ax=ax3, cfg=cfg)
+            plotter_err.plot_q(ax=ax4, cfg=cfg)
+            ax4.set_ylabel('quaternion err')
+
+        TrajectoryPlotter.show_save_figure(cfg, fig)
+
+        return fig, ax1, ax2
+
+    @staticmethod
+    def show_save_figure(cfg, fig):
+        plt.draw()
+        plt.pause(0.001)
         if cfg.save_fn:
             filename = os.path.join(cfg.result_dir, cfg.save_fn)
             print("save to file: " + filename)
@@ -310,8 +338,6 @@ class TrajectoryPlotter:
             plt.show()
         if cfg.close_figure:
             plt.close(fig)
-
-        return fig, ax
 
 
 ########################################################################################################################
@@ -345,10 +371,13 @@ class TrajectoryPlotter_Test(unittest.TestCase):
 
         plotter = TrajectoryPlotter(traj_obj=traj, config=TrajectoryPlotConfig(show=False, close_figure=False))
         plotter.plot_pose()
-        plotter.plot_pose(angles=True, in_radians=True)
-        plotter.plot_pose(angles=True, in_radians=False)
-        plotter.plot_pose(angles=True, in_radians=False, cfg=TrajectoryPlotConfig(show=False, close_figure=False,
-                                                                                  plot_type=TrajectoryPlotTypes.plot_2D_over_dist))
+        plotter.plot_pose(angles=True)
+        plotter.config.radians = False
+        plotter.plot_pose(angles=True)
+        plotter.plot_pose(angles=True, cfg=TrajectoryPlotConfig(show=False,
+                                                                close_figure=False,
+                                                                radians=False,
+                                                                plot_type=TrajectoryPlotTypes.plot_2D_over_dist))
         print('done')
 
     # def test_plot_multi(self):
