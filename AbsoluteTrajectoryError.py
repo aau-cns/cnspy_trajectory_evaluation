@@ -5,6 +5,7 @@ import math
 import numpy as np
 import transformations as tf
 import matplotlib.pyplot as plt
+from TrajectoryPlotter import TrajectoryPlotConfig, TrajectoryPlotTypes, TrajectoryPlotter
 
 
 # TODO: NEES requires a Covariance of the pose
@@ -26,6 +27,9 @@ class AbsoluteTrajectoryError:
     t_vec = None
     dist_vec = None
 
+    traj_err = None
+    traj_est = None
+
     def __init__(self, traj_est, traj_gt):
         assert (isinstance(traj_est, Trajectory))
         assert (isinstance(traj_gt, Trajectory))
@@ -46,58 +50,42 @@ class AbsoluteTrajectoryError:
         self.rmse_rot_vec = e_rot_rmse_deg
         self.t_vec = traj_est.t_vec - traj_est.t_vec[0]
         self.dist_vec = traj_est.get_accumulated_distances()
+        self.traj_err = Trajectory(t_vec=self.t_vec, p_vec=self.err_p_vec, q_vec=self.err_q_vec)
+        self.traj_est = traj_est
 
-    def pose_err_plot(self):
-        pass
+    def plot_pose_err(self, cfg=TrajectoryPlotConfig(), angles=False):
+        TrajectoryPlotter.plot_pose_err(TrajectoryPlotter(traj_obj=self.traj_est, config=cfg),
+                                        TrajectoryPlotter(traj_obj=self.traj_err, config=cfg), cfg=cfg,
+                                        angles=angles)
 
-    def plot_p_err(self, over_distance=False, fig=None, ax=None):
-        if fig is None:
-            fig = plt.figure(figsize=(20, 15), dpi=int(200))
+    def plot_p_err(self, cfg=TrajectoryPlotConfig(), fig=None, ax=None):
+        plotter = TrajectoryPlotter(traj_obj=self.traj_err, config=cfg)
+
         if ax is None:
+            if fig is None:
+                fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
             ax = fig.add_subplot(111)
-        ax.set_title('Absolute Positon Error: gt-est')
-        ax.set_ylabel('Position Error [m]')
-        if over_distance:
-            AbsoluteTrajectoryError.plot_error_n_dim(ax, self.dist_vec, self.err_p_vec)
-            ax.set_xlabel('distance [m]')
-        else:
-            AbsoluteTrajectoryError.plot_error_n_dim(ax, self.t_vec, self.err_p_vec)
-            ax.set_xlabel('rel. time [sec]')
+        plotter.plot_pos(ax=ax, cfg=cfg)
+        ax.set_ylabel('position err [m]')
 
-        ax.legend(shadow=True, fontsize='x-small')
-        ax.grid()
-        plt.draw()
-        plt.pause(0.001)
+        TrajectoryPlotter.show_save_figure(cfg, fig)
+        return plotter
 
-    def plot_rpy_err(self, over_distance=False, fig=None, ax=None):
-        if fig is None:
-            fig = plt.figure(figsize=(20, 15), dpi=int(200))
+    def plot_rpy_err(self, cfg=TrajectoryPlotConfig(), fig=None, ax=None):
+        plotter = TrajectoryPlotter(traj_obj=self.traj_err, config=cfg)
+
         if ax is None:
+            if fig is None:
+                fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
             ax = fig.add_subplot(111)
-
-        ax.set_title('Absolute Orientation Error: gt-est')
-        ax.set_ylabel('Rotation Error [deg]')
-        if over_distance:
-            AbsoluteTrajectoryError.plot_error_n_dim(ax, self.dist_vec, self.err_rpy_vec)
-            ax.set_xlabel('distance [m]')
+        plotter.plot_rpy(ax=ax, cfg=cfg)
+        if cfg.radians:
+            ax.set_ylabel('rotation err [rad]')
         else:
-            AbsoluteTrajectoryError.plot_error_n_dim(ax, self.t_vec, self.err_rpy_vec)
-            ax.set_xlabel('rel. time [sec]')
+            ax.set_ylabel('rotation err [deg]')
 
-        ax.legend(shadow=True, fontsize='x-small')
-        ax.grid()
-        plt.draw()
-        plt.pause(0.001)
-
-    @staticmethod
-    def plot_error_n_dim(ax, x_linespace, errors,
-                         colors=['r', 'g', 'b'],
-                         labels=['x', 'y', 'z']):
-        assert len(colors) == len(labels)
-        assert len(colors) == errors.shape[1]
-        for i in range(len(colors)):
-            ax.plot_3D(x_linespace, errors[:, i],
-                       colors[i] + '-', label=labels[i])
+        TrajectoryPlotter.show_save_figure(cfg, fig)
+        return plotter
 
     @staticmethod
     def compute_absolute_error(p_est, q_est, p_gt, q_gt):
@@ -148,8 +136,15 @@ class AbsoluteTrajectoryError_Test(unittest.TestCase):
         traj_est, traj_gt = self.get_trajectories()
 
         ATE = AbsoluteTrajectoryError(traj_est, traj_gt)
-        ATE.plot_p_err(cfg=TrajectoryPlotConfig(show=True))
-        ATE.plot_p_err(cfg=TrajectoryPlotConfig(show=True), over_distance=True)
+        ATE.plot_p_err()
+        ATE.plot_p_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist))
+        ATE.plot_rpy_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist))
+        print('done')
+        ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist),
+                          angles=True)
+        ATE.plot_pose_err(
+            cfg=TrajectoryPlotConfig(show=False, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist),
+            angles=True)
         print('done')
 
 
