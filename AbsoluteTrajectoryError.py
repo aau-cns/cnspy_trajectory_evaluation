@@ -25,7 +25,6 @@ class AbsoluteTrajectoryError:
     rmse_p_vec = None
     rmse_rot_vec = None  # degree
     t_vec = None
-    dist_vec = None
 
     traj_err = None
     traj_est = None
@@ -49,7 +48,7 @@ class AbsoluteTrajectoryError:
         self.rmse_p_vec = e_trans_rmse
         self.rmse_rot_vec = e_rot_rmse_deg
         self.t_vec = traj_est.t_vec - traj_est.t_vec[0]
-        self.dist_vec = traj_est.get_accumulated_distances()
+
         self.traj_err = Trajectory(t_vec=self.t_vec, p_vec=self.err_p_vec, q_vec=self.err_q_vec)
         self.traj_est = traj_est
 
