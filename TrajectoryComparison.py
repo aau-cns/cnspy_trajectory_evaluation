@@ -16,6 +16,8 @@ class AssociatedTrajectories:
     data_frame_gt_matched = None
     data_frame_est_matched = None
 
+    matches_est_gt = None  # list of tuples containing [(idx_est, idx_gt), ...]
+
     def __init__(self, fn_gt, fn_est):
         assert (os.path.exists(fn_gt))
         assert (os.path.exists((fn_est)))
@@ -30,6 +32,11 @@ class AssociatedTrajectories:
 
         self.data_frame_est_matched = self.data_frame_est.loc[idx_est, :]
         self.data_frame_gt_matched = self.data_frame_gt.loc[idx_gt, :]
+
+        self.matches_est_gt = zip(idx_est, idx_gt)
+        # using zip() and * operator to
+        # perform Unzipping
+        # res = list(zip(*test_list))
 
         TUMCSV2DataFrame.save_TUM_CSV(self.data_frame_est_matched,
                                       filename=str(os.path.splitext(fn_gt)[0]) + "_matched.csv")
@@ -109,6 +116,10 @@ class AlignedTrajectories:
 
         self.traj_est_matched_aligned.transform_p(scale=s, t=t, R=R)
 
+    def save_to_CSV(self, save_dir='.'):
+        self.traj_est_matched_aligned.save_to_CSV(os.path.join(save_dir, 'traj_est_matched_aligned.csv'))
+        self.traj_gt_matched.save_to_CSV(os.path.join(save_dir, 'traj_gt_matched_aligned.csv'))
+
 
 ########################################################################################################################
 #################################################### T E S T ###########################################################
@@ -141,14 +152,15 @@ class TrajectoryAssociator_Test(unittest.TestCase):
     def test_align_trajectories(self):
         associated = self.get_associated()
         aligned = AlignedTrajectories(associated=associated)
+        aligned.save_to_CSV(save_dir='./results/')
         traj_est_matched = Trajectory(df=associated.data_frame_est_matched)
         plot_gt = TrajectoryPlotter(traj_obj=aligned.traj_gt_matched)
         plot_est = TrajectoryPlotter(traj_obj=traj_est_matched)
         plot_est_aligned = TrajectoryPlotter(traj_obj=aligned.traj_est_matched_aligned)
 
-        TrajectoryPlotter.multi_plot(traj_plotter_list=[plot_gt, plot_est, plot_est_aligned],
-                                     cfg=TrajectoryPlotConfig(),
-                                     name_list=['gt_matched', 'est_matched', 'est_matched_aligned'])
+        TrajectoryPlotter.multi_plot_3D(traj_plotter_list=[plot_gt, plot_est, plot_est_aligned],
+                                        cfg=TrajectoryPlotConfig(),
+                                        name_list=['gt_matched', 'est_matched', 'est_matched_aligned'])
 
 
 if __name__ == "__main__":
