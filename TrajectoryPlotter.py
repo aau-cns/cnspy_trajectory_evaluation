@@ -28,10 +28,11 @@ class TrajectoryPlotConfig():
     save_fn = "result.png"
     result_dir = "."
     show = True
+    close_figure = False
 
     def __init__(self, white_list=[], num_points=[],
                  plot_type=TrajectoryPlotTypes.plot_3D, dpi=200, title="plot",
-                 scale=1.0, save_fn="result.png", result_dir=".", show=True):
+                 scale=1.0, save_fn="result.png", result_dir=".", show=True, close_figure=False):
         self.white_list = white_list
         self.num_points = num_points
         self.plot_type = plot_type
@@ -41,6 +42,7 @@ class TrajectoryPlotConfig():
         self.save_fn = save_fn
         self.result_dir = result_dir
         self.show = show
+        self.close_figure = close_figure
 
 
 class TrajectoryPlotter:
@@ -60,8 +62,8 @@ class TrajectoryPlotter:
 
         self.config = config
 
-    def plot(self, cfg=None, ax=None):
-        if not cfg:
+    def plot_on_axes(self, ax, cfg=None, label="trajectory"):
+        if cfg is None:
             cfg = self.config
 
         data_dict = TUMCSV2DataFrame.DataFrame_to_numpy_dict(self.traj_df)
@@ -72,7 +74,6 @@ class TrajectoryPlotter:
 
         if cfg.white_list:
             print("white list args: " + str(cfg.white_list))
-
         if any([flag == 'x' for flag in cfg.white_list]):
             xs = []
             print("clear xs")
@@ -96,27 +97,28 @@ class TrajectoryPlotter:
             ys *= scale
             zs *= scale
 
-        fig = None
-        ax = None
-        # colors = plt.cm.spectral(np.linspace(0.1, 0.9, len(1)))
-        if cfg.plot_type == TrajectoryPlotTypes.scatter_3D or cfg.plot_type == TrajectoryPlotTypes.plot_3D:
+        if cfg.plot_type == TrajectoryPlotTypes.scatter_3D:
+            ax.scatter(xs, ys, zs, zdir='z', label=str(label))
+        elif cfg.plot_type == TrajectoryPlotTypes.plot_3D:
+            ax.plot3D(xs, ys, zs, label=str(label))
+
+    def plot(self, cfg=None, ax=None, fig=None):
+        if cfg is None:
+            cfg = self.config
+
+        if (ax is None) or (fig is None):
             fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
             ax = fig.add_subplot(111, projection='3d')
-            # ax = plt.axes(projection='3d')
-            if cfg.title:
-                ax.set_title(cfg.title)
+
+        if cfg.title:
+            ax.set_title(cfg.title)
+        else:
+            if cfg.plot_type == TrajectoryPlotTypes.scatter_3D:
+                ax.set_title("Scatter Plot")
             else:
-                if cfg.plot_type == TrajectoryPlotTypes.scatter_3D:
-                    ax.set_title("Scatter Plot")
-                else:
-                    ax.set_title("Plot3D")
+                ax.set_title("Plot3D")
 
-            # ax.set_prop_cycle('color', colors)
-
-        if cfg.plot_type == TrajectoryPlotTypes.scatter_3D:
-            ax.scatter(xs, ys, zs, zdir='z')
-        elif cfg.plot_type == TrajectoryPlotTypes.plot_3D:
-            ax.plot3D(xs, ys, zs)
+        self.plot_on_axes(ax=ax, cfg=cfg)
 
         ax.legend(shadow=True, fontsize='x-small')
         ax.grid()
@@ -130,7 +132,41 @@ class TrajectoryPlotter:
             plt.savefig(filename, dpi=int(cfg.dpi))
         if cfg.show:
             plt.show()
-        else:
+        if cfg.close_figure:
+            plt.close(fig)
+
+        return fig, ax
+
+    @staticmethod
+    def multi_plot(traj_plotter_list, cfg, name_list=[]):
+
+        num_plots = len(traj_plotter_list)
+
+        fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
+        ax = fig.add_subplot(111, projection='3d')
+        colors = plt.cm.spectral(np.linspace(0.1, 0.9, num_plots))
+        ax.set_prop_cycle('color', colors)
+
+        idx = 0
+        for traj in traj_plotter_list:
+            traj.plot_on_axes(ax=ax, label=name_list[idx])
+            idx += 1
+
+        ax.legend(shadow=True, fontsize='x-small')
+        ax.grid()
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+        plt.draw()
+        plt.pause(0.001)
+
+        if cfg.save_fn:
+            filename = os.path.join(cfg.result_dir, cfg.save_fn)
+            print("save to file: " + filename)
+            plt.savefig(filename, dpi=int(cfg.dpi))
+        if cfg.show:
+            plt.show()
+        if cfg.close_figure:
             plt.close(fig)
 
         return fig, ax
@@ -146,19 +182,29 @@ import math
 class TrajectoryPlotter_Test(unittest.TestCase):
     def load_trajectory_from_CSV(self):
         traj = Trajectory()
-        traj.load_from_CSV(filename='../test/example/gt.csv')
+        traj.load_from_CSV(filename='../test/example/stamped_groundtruth.csv')
+        self.assertFalse(traj.is_empty())
         return traj
 
     def load_trajectory2_from_CSV(self):
         traj = Trajectory()
         traj.load_from_CSV(filename='../test/example/est.csv')
+        self.assertFalse(traj.is_empty())
         return traj
 
     def test_plot(self):
         traj = self.load_trajectory_from_CSV()
 
-        plotter = TrajectoryPlotter(traj_obj=traj)
+        plotter = TrajectoryPlotter(traj_obj=traj, config=TrajectoryPlotConfig(show=False, close_figure=False))
         plotter.plot()
+
+    def test_plot_multi(self):
+        plotter1 = TrajectoryPlotter(traj_obj=self.load_trajectory_from_CSV(),
+                                     config=TrajectoryPlotConfig(num_points=120000))
+        plotter2 = TrajectoryPlotter(traj_obj=self.load_trajectory2_from_CSV())
+
+        TrajectoryPlotter.multi_plot([plotter1, plotter2], cfg=TrajectoryPlotConfig(show=True),
+                                     name_list=['gt', 'est'])
 
 
 if __name__ == "__main__":
