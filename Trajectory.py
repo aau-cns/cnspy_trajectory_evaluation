@@ -12,8 +12,8 @@ class Trajectory:
     t_vec = None
 
     def __init__(self, t_vec=None, p_vec=None, q_vec=None, df=None):
-        if df:
-            self.load_from_data_frame(df)
+        if df is not None:
+            self.load_from_DataFrame(df)
         else:
             self.t_vec = t_vec
             self.p_vec = p_vec
@@ -26,16 +26,19 @@ class Trajectory:
             return False
 
         df = TUMCSV2DataFrame.load_TUM_CSV(filename=filename, sep=sep, comment=comment, header=header)
-        self.load_from_data_frame(df)
+        self.load_from_DataFrame(df)
         return True
 
-    def load_from_data_frame(self, df):
-        self.t_vec, self.p_vec, self.q_vec = TUMCSV2DataFrame.data_frame_to_tpq(data_frame=df)
+    def load_from_DataFrame(self, df):
+        self.t_vec, self.p_vec, self.q_vec = TUMCSV2DataFrame.DataFrame_to_TPQ(data_frame=df)
+
+    def to_DataFrame(self):
+        return TUMCSV2DataFrame.TPQ_to_DataFrame(self.t_vec, self.p_vec, self.q_vec)
 
     def save_to_CSV(self, filename):
         if self.is_empty():
             return False
-        df = TUMCSV2DataFrame.tpq_to_data_frame(self.t_vec, self.p_vec, self.q_vec)
+        df = TUMCSV2DataFrame.TPQ_to_DataFrame(self.t_vec, self.p_vec, self.q_vec)
         TUMCSV2DataFrame.save_TUM_CSV(df, filename=filename)
         return True
 
