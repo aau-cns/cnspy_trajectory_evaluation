@@ -51,21 +51,32 @@ class TrajectoryAlignmentTypes(Enum):
         return self.value
 
     @staticmethod
-    def align_trajectories(p_es, p_gt, q_es, q_gt, method='sim3', num_frames=-1):
+    def trajectory_aligment(traj_est, traj_gt, method='sim3', num_frames=-1):
         '''
         calculate s, R, t so that:
             gt = R * s * est + t
         method can be: sim3, se3, posyaw, none;
         n_aligned: -1 means using all the frames
         '''
+        assert (isinstance(traj_est, Trajectory))
+        assert (isinstance(traj_gt, Trajectory))
+
+        p_es = traj_est.p_vec
+        q_es = traj_est.q_vec
+        p_gt = traj_gt.p_vec
+        q_gt = traj_gt.q_vec
+
+        p_es, p_gt, q_es, q_gt
         assert p_es.shape[1] == 3
         assert p_gt.shape[1] == 3
         assert q_es.shape[1] == 4
         assert q_gt.shape[1] == 4
+        assert p_es.shape[0] == p_gt.shape[0]
+        assert q_es.shape[0] == q_gt.shape[0]
 
         s = 1
-        R = None
-        t = None
+        R = np.identity(3)
+        t = np.zeros((3,))
         if method == TrajectoryAlignmentTypes.sim3:
             assert num_frames >= 2 or num_frames == -1, "sim3 uses at least 2 frames"
             s, R, t = SpatialAlignement.align_SIM3(p_es, p_gt, num_frames)
@@ -86,8 +97,17 @@ class AlignedTrajectories:
     traj_est_matched_aligned = None
     traj_gt_matched = None
 
-    def __init__(self, associated, alignment_type=TrajectoryAlignmentTypes.sim3):
-        pass
+    def __init__(self, associated, alignment_type=TrajectoryAlignmentTypes.sim3, num_frames=-1):
+        assert (isinstance(associated, AssociatedTrajectories))
+
+        self.traj_gt_matched = Trajectory(df=associated.data_frame_gt_matched)
+        self.traj_est_matched_aligned = Trajectory(df=associated.data_frame_est_matched)
+
+        s, R, t = TrajectoryAlignmentTypes.trajectory_aligment(self.traj_est_matched_aligned, self.traj_gt_matched,
+                                                               method=alignment_type,
+                                                               num_frames=num_frames)
+
+        self.traj_est_matched_aligned.transform_p(scale=s, t=t, R=R)
 
 
 ########################################################################################################################
@@ -96,6 +116,7 @@ class AlignedTrajectories:
 import unittest
 import time
 import csv
+from TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
 
 
 class TrajectoryAssociator_Test(unittest.TestCase):
@@ -107,12 +128,27 @@ class TrajectoryAssociator_Test(unittest.TestCase):
     def stop(self):
         print "Process time: " + str((time.time() - self.start_time))
 
-    def test_init(self):
+    def get_associated(self):
         fn_gt_csv = "/home/jungr/workspace/github/rpg_trajectory_evaluation/results/euroc_mono_stereo/laptop/vio_mono/laptop_vio_mono_MH_01/stamped_groundtruth.txt"
         fn_est_csv = "/home/jungr/workspace/github/rpg_trajectory_evaluation/results/euroc_mono_stereo/laptop/vio_mono/laptop_vio_mono_MH_01/stamped_traj_estimate.txt"
+        return AssociatedTrajectories(fn_est=fn_est_csv, fn_gt=fn_gt_csv)
+
+    def test_init(self):
         self.start()
-        associated = AssociatedTrajectories(fn_est=fn_est_csv, fn_gt=fn_gt_csv)
+        associated = self.get_associated()
         self.stop()
+
+    def test_align_trajectories(self):
+        associated = self.get_associated()
+        aligned = AlignedTrajectories(associated=associated)
+        traj_est_matched = Trajectory(df=associated.data_frame_est_matched)
+        plot_gt = TrajectoryPlotter(traj_obj=aligned.traj_gt_matched)
+        plot_est = TrajectoryPlotter(traj_obj=traj_est_matched)
+        plot_est_aligned = TrajectoryPlotter(traj_obj=aligned.traj_est_matched_aligned)
+
+        TrajectoryPlotter.multi_plot(traj_plotter_list=[plot_gt, plot_est, plot_est_aligned],
+                                     cfg=TrajectoryPlotConfig(),
+                                     name_list=['gt_matched', 'est_matched', 'est_matched_aligned'])
 
 
 if __name__ == "__main__":
