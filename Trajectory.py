@@ -25,7 +25,7 @@ class Trajectory:
             print("Trajectory: could not find file %s" % os.path.abspath(filename))
             return False
 
-        df = TUMCSV2DataFrame.load_TUM_CSV(filename=filename, sep=sep, comment=comment, header=header)
+        df = TUMCSV2DataFrame.load_CSV(filename=filename, sep=sep, comment=comment, header=header)
         self.load_from_DataFrame(df)
         return True
 
@@ -39,7 +39,7 @@ class Trajectory:
         if self.is_empty():
             return False
         df = TUMCSV2DataFrame.TPQ_to_DataFrame(self.t_vec, self.p_vec, self.q_vec)
-        TUMCSV2DataFrame.save_TUM_CSV(df, filename=filename)
+        TUMCSV2DataFrame.save_CSV(df, filename=filename)
         return True
 
     def is_empty(self):

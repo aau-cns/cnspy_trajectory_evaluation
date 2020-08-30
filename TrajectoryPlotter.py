@@ -2,6 +2,7 @@ import os
 import numpy as np
 from enum import Enum
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D  # <--- This is important for 3d plotting
 
 from csv2dataframe.TUMCSV2DataFrame import TUMCSV2DataFrame
 from Trajectory import Trajectory
