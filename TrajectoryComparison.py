@@ -4,9 +4,8 @@ from enum import Enum
 
 from Trajectory import Trajectory
 from SpatialAlignment import SpatialAlignement
-from tum_eval.TUMCSV2DataFrame import TUMCSV2DataFrame
+from csv2dataframe.TUMCSV2DataFrame import TUMCSV2DataFrame
 from timestamp_association.TimestampAssociation import TimestampAssociation
-import transformations as tf
 
 
 class AssociatedTrajectories:
@@ -126,7 +125,6 @@ class AlignedTrajectories:
 ########################################################################################################################
 import unittest
 import time
-import csv
 from TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
 
 

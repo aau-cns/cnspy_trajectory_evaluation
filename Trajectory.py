@@ -3,7 +3,7 @@
 import os
 import numpy as np
 import transformations as tf
-from tum_eval.TUMCSV2DataFrame import TUMCSV2DataFrame
+from csv2dataframe.TUMCSV2DataFrame import TUMCSV2DataFrame
 
 
 class Trajectory:

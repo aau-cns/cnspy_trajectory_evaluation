@@ -1,12 +1,9 @@
 import os
 import numpy as np
-import math
 from enum import Enum
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from cycler import cycler
 
-from tum_eval.TUMCSV2DataFrame import TUMCSV2DataFrame
+from csv2dataframe.TUMCSV2DataFrame import TUMCSV2DataFrame
 from Trajectory import Trajectory
 
 
