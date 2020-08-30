@@ -1,11 +1,8 @@
-import os
-from Trajectory import Trajectory
-from TrajectoryPlotter import TrajectoryPlotConfig
-import math
+from trajectory.Trajectory import Trajectory
 import numpy as np
 import transformations as tf
 import matplotlib.pyplot as plt
-from TrajectoryPlotter import TrajectoryPlotConfig, TrajectoryPlotTypes, TrajectoryPlotter
+from trajectory.TrajectoryPlotter import TrajectoryPlotConfig, TrajectoryPlotTypes
 
 
 # TODO: NEES requires a Covariance of the pose
@@ -118,9 +115,7 @@ class AbsoluteTrajectoryError:
 #################################################### T E S T ###########################################################
 ########################################################################################################################
 import unittest
-import time
-import csv
-from TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
+from trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
 
 
 class AbsoluteTrajectoryError_Test(unittest.TestCase):

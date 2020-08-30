@@ -2,7 +2,7 @@ import os
 import numpy as np
 from enum import Enum
 
-from Trajectory import Trajectory
+from trajectory.Trajectory import Trajectory
 from SpatialAlignment import SpatialAlignement
 from csv2dataframe.TUMCSV2DataFrame import TUMCSV2DataFrame
 from timestamp_association.TimestampAssociation import TimestampAssociation
@@ -125,7 +125,7 @@ class AlignedTrajectories:
 ########################################################################################################################
 import unittest
 import time
-from TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
+from trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
 
 
 class TrajectoryAssociator_Test(unittest.TestCase):
