@@ -2,7 +2,8 @@ from trajectory.Trajectory import Trajectory
 import numpy as np
 import transformations as tf
 import matplotlib.pyplot as plt
-from trajectory.TrajectoryPlotter import TrajectoryPlotConfig, TrajectoryPlotTypes
+from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
+from trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
 
 
 # TODO: NEES requires a Covariance of the pose

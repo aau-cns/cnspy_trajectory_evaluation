@@ -125,7 +125,8 @@ class AlignedTrajectories:
 ########################################################################################################################
 import unittest
 import time
-from trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
+from trajectory.TrajectoryPlotter import TrajectoryPlotter
+from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
 
 
 class TrajectoryAssociator_Test(unittest.TestCase):
