@@ -1,9 +1,11 @@
-from trajectory.Trajectory import Trajectory
 import numpy as np
+import math
 import transformations as tf
 import matplotlib.pyplot as plt
 from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
 from trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
+from trajectory.Trajectory import Trajectory
+from trajectory.TrajectoryEstimated import TrajectoryEstimated
 
 
 # TODO: NEES requires a Covariance of the pose
@@ -26,6 +28,7 @@ class AbsoluteTrajectoryError:
 
     traj_err = None
     traj_est = None
+    traj_gt = None
 
     def __init__(self, traj_est, traj_gt):
         assert (isinstance(traj_est, Trajectory))
@@ -49,11 +52,13 @@ class AbsoluteTrajectoryError:
 
         self.traj_err = Trajectory(t_vec=self.t_vec, p_vec=self.err_p_vec, q_vec=self.err_q_vec)
         self.traj_est = traj_est
+        self.traj_gt = traj_gt
 
     def plot_pose_err(self, cfg=TrajectoryPlotConfig(), angles=False):
         return TrajectoryPlotter.plot_pose_err(TrajectoryPlotter(traj_obj=self.traj_est, config=cfg),
                                                TrajectoryPlotter(traj_obj=self.traj_err, config=cfg), cfg=cfg,
-                                               angles=angles)
+                                               angles=angles,
+                                               plotter_gt=TrajectoryPlotter(traj_obj=self.traj_gt, config=cfg))
 
     def plot_p_err(self, cfg=TrajectoryPlotConfig(), fig=None, ax=None):
         plotter = TrajectoryPlotter(traj_obj=self.traj_err, config=cfg)
@@ -103,11 +108,16 @@ class AbsoluteTrajectoryError:
             e_rot_rmse_deg[i] = np.rad2deg(np.linalg.norm(tf.logmap_so3(e_R[:3, :3])))
 
         # scale drift
-        motion_gt = np.diff(p_gt, 0)
-        motion_es = np.diff(p_est, 0)
-        dist_gt = np.sqrt(np.sum(np.multiply(motion_gt, motion_gt), 1))
-        dist_es = np.sqrt(np.sum(np.multiply(motion_es, motion_es), 1))
-        e_scale_perc = np.abs((np.divide(dist_es, dist_gt) - 1.0) * 100)
+        motion_gt = np.diff(p_gt, n=1, axis=0)
+        motion_es = np.diff(p_est, n=1, axis=0)
+        dist_xyz_gt = np.sum(np.abs(motion_gt), axis=0)
+        dist_xyz_es = np.sum(np.abs(motion_es), axis=0)
+        dist_gt = np.linalg.norm(dist_xyz_gt)
+        dist_es = np.linalg.norm(dist_xyz_es)
+        e_scale_perc = 1.0
+
+        if dist_gt > 0:
+            e_scale_perc = abs((dist_gt / dist_es) - 1.0) * 100.0
 
         return e_trans_rmse, e_trans_vec, e_rot_rmse_deg, e_rpy, e_scale_perc, e_q_vec
 
@@ -128,6 +138,13 @@ class AbsoluteTrajectoryError_Test(unittest.TestCase):
         self.assertTrue(traj_gt.load_from_CSV('../results/traj_gt_matched_aligned.csv'))
         return traj_est, traj_gt
 
+    def get_trajectories_2(self):
+        traj_est = TrajectoryEstimated()
+        self.assertTrue(traj_est.load_from_CSV('../sample_data/ID1-pose-est-cov.csv'))
+        traj_gt = Trajectory()
+        self.assertTrue(traj_gt.load_from_CSV('../sample_data/ID1-pose-gt.csv'))
+        return traj_est, traj_gt
+
     def test_ATE(self):
         traj_est, traj_gt = self.get_trajectories()
 
@@ -135,13 +152,28 @@ class AbsoluteTrajectoryError_Test(unittest.TestCase):
         ATE.plot_p_err()
         ATE.plot_p_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist))
         ATE.plot_rpy_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist))
-        print('done')
+        print('ATE1 done')
         ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist),
                           angles=True)
         ATE.plot_pose_err(
             cfg=TrajectoryPlotConfig(show=False, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist),
             angles=True)
-        print('done')
+        print('ATE1 done')
+
+    def test_ATE2(self):
+        traj_est, traj_gt = self.get_trajectories_2()
+
+        ATE = AbsoluteTrajectoryError(traj_est, traj_gt)
+        ATE.plot_p_err()
+        ATE.plot_p_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t))
+        ATE.plot_rpy_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t))
+        print('ATE2 done')
+        ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
+                          angles=True)
+        ATE.plot_pose_err(
+            cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
+            angles=True)
+        print('ATE2 done')
 
 
 if __name__ == "__main__":
