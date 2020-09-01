@@ -23,7 +23,10 @@ import numpy as np
 import transformations as tf
 from trajectory.Trajectory import Trajectory
 from trajectory.TrajectoryEstimated import TrajectoryEstimated
-from numpy_utils.numpy_statistics import numpy_statistics
+from trajectory.PlotLineStyle import PlotLineStyle
+from scipy.stats.distributions import chi2
+import matplotlib.pyplot as plt
+from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
 
 
 class TrajectoryNEES:
@@ -41,6 +44,25 @@ class TrajectoryNEES:
 
         self.ANEES_p = np.mean(self.NEES_p_vec)
         self.ANEES_q = np.mean(self.NEES_q_vec)
+
+    def plot(self, fig=None, cfg=None):
+        if cfg is None:
+            cfg = TrajectoryPlotConfig()
+        if fig is None:
+            fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
+
+        ax1 = fig.add_subplot(211)
+        TrajectoryNEES.ax_plot_nees(ax1, self.NEES_p_vec, 3, conf_ival=0.997)
+        ax1.set_ylabel('NEES pos')
+        ax1.legend(shadow=True, fontsize='x-small')
+        ax1.grid()
+        ax2 = fig.add_subplot(212)
+        TrajectoryNEES.ax_plot_nees(ax2, self.NEES_q_vec, 3, conf_ival=0.997)
+        ax2.set_ylabel('NEES rot')
+        ax2.legend(shadow=True, fontsize='x-small')
+        ax2.grid()
+
+        TrajectoryPlotter.show_save_figure(cfg, fig)
 
     # https://de.mathworks.com/help/fusion/ref/trackerrormetrics-system-object.html
     @staticmethod
@@ -64,6 +86,36 @@ class TrajectoryNEES:
         nees = np.matmul(np.matmul(err.reshape(1, 3), P_inv), err.reshape(3, 1))
 
         return nees
+
+    @staticmethod
+    def chi_square_confidence_bounds(confidence_interval=0.95, degrees_of_freedom=3):
+        # https://stackoverflow.com/questions/53019080/chi2inv-in-python
+        # ppf(q, df, loc=0, scale=1) Percent point function (inverse of cdf percentiles).
+        return (chi2.ppf(q=(1.0 - confidence_interval), df=degrees_of_freedom),
+                chi2.ppf(q=confidence_interval, df=degrees_of_freedom))
+
+    @staticmethod
+    def ax_plot_nees(ax, NEES_vec, dim, conf_ival, color='r', ls=PlotLineStyle()):
+        l = NEES_vec.shape[0]
+        ANEES = np.mean(NEES_vec)
+        x_linespace = range(0, l)
+        conf_ival = float(conf_ival)
+        TrajectoryPlotter.ax_plot_n_dim(ax, x_linespace=x_linespace, values=NEES_vec,
+                                        colors=[color], labels=['ANEES={:.3f}'.format(ANEES)], ls=ls)
+
+        interval = TrajectoryNEES.chi_square_confidence_bounds(confidence_interval=conf_ival,
+                                                               degrees_of_freedom=dim)
+        y_values = np.ones((l, 1))
+        TrajectoryPlotter.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * interval[1],
+                                        colors=['k'],
+                                        labels=['p={:.3f}->{:.3f}'.format(conf_ival, interval[1])],
+                                        ls=PlotLineStyle(linewidth=0.5, linestyle='--'))
+        TrajectoryPlotter.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * interval[0],
+                                        colors=['k'],
+                                        labels=['p={:.3f}->{:.3f}'.format(1.0 - conf_ival, interval[0])],
+                                        ls=PlotLineStyle(linewidth=0.5, linestyle='--'))
+
+        pass
 
 
 ########################################################################################################################
@@ -101,6 +153,8 @@ class TrajectoryNEES_Test(unittest.TestCase):
         self.stop('NEES computation')
         print('ANEES_p: ' + str(NEES.ANEES_p))
         print('ANEES_q: ' + str(NEES.ANEES_q))
+
+        NEES.plot(cfg=TrajectoryPlotConfig(show=True))
 
 
 if __name__ == "__main__":
