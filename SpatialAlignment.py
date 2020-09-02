@@ -102,7 +102,7 @@ class SpatialAlignement:
             idxs = SpatialAlignement.get_indices(n_aligned, p_es.shape[0])
             est_pos = p_es[idxs, 0:3]
             gt_pos = p_gt[idxs, 0:3]
-            s, R, t = SpatialAlignement.align_umeyama(gt_pos, est_pos,
+            s, R, t = SpatialAlignement.align_Umeyama(gt_pos, est_pos,
                                                       known_scale=True)  # note the order
             t = np.array(t)
             t = t.reshape((3,))
