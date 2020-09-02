@@ -23,14 +23,16 @@ class AbsoluteTrajectoryError:
     err_p_vec = None
     err_q_vec = None
     err_rpy_vec = None
-    err_scale_perc = None
+    err_scale = None
     rmse_p_vec = None
-    rmse_rot_vec = None  # degree
+    rmse_q_deg_vec = None  # degree
     t_vec = None
 
     traj_err = None
     traj_est = None
     traj_gt = None
+    ARMSE_p = None
+    ARMSE_q_deg = None
 
     def __init__(self, traj_est, traj_gt):
         assert (isinstance(traj_est, Trajectory))
@@ -41,22 +43,25 @@ class AbsoluteTrajectoryError:
         self.err_p_vec = np.abs(traj_gt.p_vec - traj_est.p_vec)
         # self.err_p_vec = traj_gt.p_vec.sub(traj_est.p_vec).abs()
 
-        e_trans_rmse, e_trans_vec, e_rot_rmse_deg, e_rpy, e_scale_perc, e_q_vec = \
+        e_p_vec, e_p_rmse_vec, e_q_vec, e_rpy_vec, e_q_rmse_deg_vec, e_scale = \
             AbsoluteTrajectoryError.compute_absolute_error(traj_est.p_vec, traj_est.q_vec, traj_gt.p_vec, traj_gt.q_vec)
 
-        self.err_p_vec = e_trans_vec
+        self.err_p_vec = e_p_vec
         self.err_q_vec = e_q_vec
-        self.err_rpy_vec = e_rpy
-        self.err_scale_perc = e_scale_perc
-        self.rmse_p_vec = e_trans_rmse
-        self.rmse_rot_vec = e_rot_rmse_deg
+        self.err_rpy_vec = e_rpy_vec
+        self.err_scale = e_scale
+        self.rmse_p_vec = e_p_rmse_vec
+        self.rmse_q_deg_vec = e_q_rmse_deg_vec
         self.t_vec = traj_est.t_vec - traj_est.t_vec[0]
 
         self.traj_err = Trajectory(t_vec=self.t_vec, p_vec=self.err_p_vec, q_vec=self.err_q_vec)
         self.traj_est = traj_est
         self.traj_gt = traj_gt
+        self.ARMSE_p = np.mean(self.rmse_p_vec)
+        self.ARMSE_q_deg = np.mean(self.rmse_q_deg_vec)
 
     def plot_pose_err(self, cfg=TrajectoryPlotConfig(), angles=False):
+        # TODO: ugly, as error plot are defined here below, but are not used!
         return TrajectoryPlotter.plot_pose_err(TrajectoryPlotter(traj_obj=self.traj_est, config=cfg),
                                                TrajectoryPlotter(traj_obj=self.traj_err, config=cfg), cfg=cfg,
                                                angles=angles,
@@ -71,7 +76,7 @@ class AbsoluteTrajectoryError:
             ax = fig.add_subplot(111)
 
         plotter.ax_plot_pos(ax=ax, cfg=cfg)
-        ax.set_ylabel('position err [m]')
+        ax.set_ylabel('(p_GT - p_EST) ARMSE ={:.2f} [m]'.format(self.ARMSE_p))
 
         TrajectoryPlotConfig.show_save_figure(cfg, fig)
         return fig, ax, plotter
@@ -85,39 +90,44 @@ class AbsoluteTrajectoryError:
             ax = fig.add_subplot(111)
         plotter.ax_plot_rpy(ax=ax, cfg=cfg)
         if cfg.radians:
-            ax.set_ylabel('rotation err [rad]')
+            ax.set_ylabel('(q_GT - q_EST) ARMSE ={:.2f} [rad]'.format(np.deg2rad(self.ARMSE_q_deg)))
         else:
-            ax.set_ylabel('rotation err [deg]')
+            ax.set_ylabel('(q_GT - q_EST) ARMSE ={:.2f} [deg]'.format(self.ARMSE_q_deg))
 
             TrajectoryPlotConfig.show_save_figure(cfg, fig)
         return fig, ax, plotter
 
     @staticmethod
     def compute_absolute_error(p_est, q_est, p_gt, q_gt):
-        e_trans_vec = (p_gt - p_est)
-        e_trans_rmse = np.sqrt(np.sum(e_trans_vec ** 2, 1))
+        e_p_vec = (p_gt - p_est)
+        e_p_rmse_vec = np.sqrt(np.sum(e_p_vec ** 2, 1))
 
         # orientation error
-        e_rot_rmse_deg = np.zeros((len(e_trans_rmse, )))
-        e_rpy = np.zeros(np.shape(p_est))
-        e_q_vec = np.zeros((len(e_trans_rmse), 4))  # x0, y0, z0, w0
+        e_q_rmse_deg_vec = np.zeros((len(e_p_rmse_vec, )))
+        e_rpy_vec = np.zeros(np.shape(p_est))
+        e_q_vec = np.zeros((len(e_p_rmse_vec), 4))  # x0, y0, z0, w0
+
         for i in range(np.shape(p_est)[0]):
-            R_we = tf.matrix_from_quaternion(q_est[i, :])
-            R_wg = tf.matrix_from_quaternion(q_gt[i, :])
-            e_R = np.dot(R_we, np.linalg.inv(R_wg))
+            R_wb_est = tf.matrix_from_quaternion(q_est[i, :])
+            R_wb_gt = tf.matrix_from_quaternion(q_gt[i, :])
+
+            # R_wb_gt = R_wb_est * R_wb_err; w=World, b=Body
+            # R_wb_err = R_wb_est' * R_wb_gt
+            e_R = np.matmul(R_wb_est.T, R_wb_gt)
             e_q_vec[i, :] = tf.quaternion_from_matrix(e_R)
-            e_rpy[i, :] = tf.euler_from_matrix(e_R, 'rxyz')
-            e_rot_rmse_deg[i] = np.rad2deg(np.linalg.norm(tf.logmap_so3(e_R[:3, :3])))
+            e_rpy_vec[i, :] = tf.euler_from_matrix(e_R, 'rxyz')
+            # e_q_rmse_deg_vec[i] = np.rad2deg(np.linalg.norm(tf.logmap_so3(e_R[:3, :3])))
+            e_q_rmse_deg_vec[i] = np.rad2deg(np.linalg.norm(e_rpy_vec[i, :]))
 
         # scale drift
         dist_gt = total_distance(p_gt)
         dist_es = total_distance(p_est)
-        e_scale_perc = 1.0
+        e_scale = 1.0
 
         if dist_gt > 0:
-            e_scale_perc = abs((dist_gt / dist_es) - 1.0) * 100.0
+            e_scale = abs((dist_gt / dist_es))
 
-        return e_trans_rmse, e_trans_vec, e_rot_rmse_deg, e_rpy, e_scale_perc, e_q_vec
+        return e_p_vec, e_p_rmse_vec, e_q_vec, e_rpy_vec, e_q_rmse_deg_vec, e_scale
 
 
 ########################################################################################################################
@@ -162,16 +172,16 @@ class AbsoluteTrajectoryError_Test(unittest.TestCase):
         traj_est, traj_gt = self.get_trajectories_2()
 
         ATE = AbsoluteTrajectoryError(traj_est, traj_gt)
-        ATE.plot_p_err()
-        ATE.plot_p_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t))
-        ATE.plot_rpy_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t))
-        print('ATE2 done')
-        ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
-                          angles=True)
-        ATE.plot_pose_err(
-            cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
-            angles=True)
-        print('ATE2 done')
+        # ATE.plot_p_err()
+        # ATE.plot_p_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t))
+        # ATE.plot_rpy_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t))
+        # print('ATE2 done')
+        # ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
+        #                   angles=True)
+        # ATE.plot_pose_err(
+        #     cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
+        #     angles=True)
+        print('ATE2 done:ARMSE p={:.2f}, q={:.2f}'.format(ATE.ARMSE_p, ATE.ARMSE_q_deg))
 
 
 if __name__ == "__main__":
