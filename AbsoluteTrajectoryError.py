@@ -2,6 +2,8 @@ import numpy as np
 import math
 import transformations as tf
 import matplotlib.pyplot as plt
+
+from numpy_utils.accumulated_distance import *
 from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
 from trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
 from trajectory.Trajectory import Trajectory
@@ -71,7 +73,7 @@ class AbsoluteTrajectoryError:
         plotter.ax_plot_pos(ax=ax, cfg=cfg)
         ax.set_ylabel('position err [m]')
 
-        TrajectoryPlotter.show_save_figure(cfg, fig)
+        TrajectoryPlotConfig.show_save_figure(cfg, fig)
         return fig, ax, plotter
 
     def plot_rpy_err(self, cfg=TrajectoryPlotConfig(), fig=None, ax=None):
@@ -87,7 +89,7 @@ class AbsoluteTrajectoryError:
         else:
             ax.set_ylabel('rotation err [deg]')
 
-        TrajectoryPlotter.show_save_figure(cfg, fig)
+            TrajectoryPlotConfig.show_save_figure(cfg, fig)
         return fig, ax, plotter
 
     @staticmethod
@@ -108,12 +110,8 @@ class AbsoluteTrajectoryError:
             e_rot_rmse_deg[i] = np.rad2deg(np.linalg.norm(tf.logmap_so3(e_R[:3, :3])))
 
         # scale drift
-        motion_gt = np.diff(p_gt, n=1, axis=0)
-        motion_es = np.diff(p_est, n=1, axis=0)
-        dist_xyz_gt = np.sum(np.abs(motion_gt), axis=0)
-        dist_xyz_es = np.sum(np.abs(motion_es), axis=0)
-        dist_gt = np.linalg.norm(dist_xyz_gt)
-        dist_es = np.linalg.norm(dist_xyz_es)
+        dist_gt = total_distance(p_gt)
+        dist_es = total_distance(p_est)
         e_scale_perc = 1.0
 
         if dist_gt > 0:

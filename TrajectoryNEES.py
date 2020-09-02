@@ -62,7 +62,7 @@ class TrajectoryNEES:
         ax2.legend(shadow=True, fontsize='x-small')
         ax2.grid()
 
-        TrajectoryPlotter.show_save_figure(cfg, fig)
+        TrajectoryPlotConfig.show_save_figure(cfg, fig)
 
     # https://de.mathworks.com/help/fusion/ref/trackerrormetrics-system-object.html
     @staticmethod
