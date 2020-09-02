@@ -1,6 +1,5 @@
 import os
 
-from trajectory.Trajectory import Trajectory
 from trajectory_evaluation.AssociatedTrajectories import AssociatedTrajectories
 from trajectory_evaluation.TrajectoryAlignmentTypes import TrajectoryAlignmentTypes
 
@@ -10,10 +9,10 @@ class AlignedTrajectories:
     traj_gt_matched = None
 
     def __init__(self, associated, alignment_type=TrajectoryAlignmentTypes.sim3, num_frames=-1):
-        assert (isinstance(associated, AssociatedTrajectories))
 
-        self.traj_gt_matched = Trajectory(df=associated.data_frame_gt_matched)
-        self.traj_est_matched_aligned = Trajectory(df=associated.data_frame_est_matched)
+        #        assert (isinstance(associated, AssociatedTrajectories))
+
+        self.traj_est_matched_aligned, self.traj_gt_matched = associated.get_trajectories()
 
         s, R, t = TrajectoryAlignmentTypes.trajectory_aligment(self.traj_est_matched_aligned, self.traj_gt_matched,
                                                                method=alignment_type,
@@ -21,9 +20,16 @@ class AlignedTrajectories:
 
         self.traj_est_matched_aligned.transform(scale=s, t=t, R=R)
 
-    def save_to_CSV(self, save_dir='.'):
-        self.traj_est_matched_aligned.save_to_CSV(os.path.join(save_dir, 'traj_est_matched_aligned.csv'))
-        self.traj_gt_matched.save_to_CSV(os.path.join(save_dir, 'traj_gt_matched_aligned.csv'))
+    def save(self, result_dir='.', prefix=None):
+        if not prefix:
+            prefix = ""
+
+        if not os.path.exists(result_dir):
+            os.makedirs(os.path.abspath(result_dir))
+        self.traj_est_matched_aligned.save_to_CSV(
+            os.path.join(result_dir, str(prefix) + 'est_matched_aligned.csv'))
+        self.traj_gt_matched.save_to_CSV(
+            os.path.join(result_dir, str(prefix) + 'gt_matched_aligned.csv'))
 
 
 ########################################################################################################################
@@ -31,6 +37,7 @@ class AlignedTrajectories:
 ########################################################################################################################
 import unittest
 import time
+from trajectory.Trajectory import Trajectory
 from trajectory.TrajectoryPlotter import TrajectoryPlotter
 from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
 
@@ -45,8 +52,8 @@ class AlignedTrajectories_Test(unittest.TestCase):
         print "Process time: " + str((time.time() - self.start_time))
 
     def get_associated(self):
-        fn_gt_csv = "/home/jungr/workspace/github/rpg_trajectory_evaluation/results/euroc_mono_stereo/laptop/vio_mono/laptop_vio_mono_MH_01/stamped_groundtruth.txt"
-        fn_est_csv = "/home/jungr/workspace/github/rpg_trajectory_evaluation/results/euroc_mono_stereo/laptop/vio_mono/laptop_vio_mono_MH_01/stamped_traj_estimate.txt"
+        fn_gt_csv = "../sample_data/ID1-pose-gt.csv"
+        fn_est_csv = "../sample_data/ID1-pose-est-cov.csv"
         return AssociatedTrajectories(fn_est=fn_est_csv, fn_gt=fn_gt_csv)
 
     def test_init(self):
@@ -57,7 +64,7 @@ class AlignedTrajectories_Test(unittest.TestCase):
     def test_align_trajectories(self):
         associated = self.get_associated()
         aligned = AlignedTrajectories(associated=associated)
-        aligned.save_to_CSV(save_dir='./results/')
+        aligned.save(result_dir='./results/')
         traj_est_matched = Trajectory(df=associated.data_frame_est_matched)
         plot_gt = TrajectoryPlotter(traj_obj=aligned.traj_gt_matched)
         plot_est = TrajectoryPlotter(traj_obj=traj_est_matched)
