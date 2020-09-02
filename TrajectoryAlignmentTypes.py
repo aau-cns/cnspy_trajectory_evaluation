@@ -41,6 +41,9 @@ class TrajectoryAlignmentTypes(Enum):
         s = 1
         R = np.identity(3)
         t = np.zeros((3,))
+
+        # TODO: hackish, but it is somehow an Enum bug!
+        method = TrajectoryAlignmentTypes(str(method))
         if method == TrajectoryAlignmentTypes.sim3:
             assert num_frames >= 2 or num_frames == -1, "sim3 uses at least 2 frames"
             s, R, t = SpatialAlignement.align_SIM3(p_es, p_gt, num_frames)
