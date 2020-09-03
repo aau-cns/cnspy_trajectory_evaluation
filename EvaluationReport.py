@@ -2,16 +2,6 @@ import configparser
 
 
 class EvaluationReport:
-    directory = None
-    fn_gt = None
-    fn_est = None
-    alignment = None
-    num_aligned_samples = None
-    ANEES_p = None
-    ANEES_q = None
-    ARMSE_p = None
-    ARMSE_q = None
-
     def __init__(self, directory='', fn_gt='', fn_est='', alignment='none',
                  num_aligned_samples=0, ANEES_p=0.0, ANEES_q=0.0, RMSE_p=0.0, RMSE_q=0.0):
         self.directory = directory

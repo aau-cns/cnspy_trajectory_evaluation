@@ -62,7 +62,8 @@ class TrajectoryEvaluation_Test(unittest.TestCase):
         self.start()
         fn_gt_csv = "../sample_data/ID1-pose-gt.csv"
         fn_est_csv = "../sample_data/ID1-pose-est-cov.csv"
-        eval = TrajectoryEvaluation(fn_gt_csv, fn_est_csv, result_dir='../sample_data/result/eval', prefix='eval-ID1-')
+        eval = TrajectoryEvaluation(fn_gt_csv, fn_est_csv, result_dir='../sample_data/result/eval', prefix='eval-ID1-',
+                                    alignment_type=TrajectoryAlignmentTypes.none)
 
         self.stop()
 

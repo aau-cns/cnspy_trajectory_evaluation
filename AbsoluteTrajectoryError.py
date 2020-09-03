@@ -1,6 +1,4 @@
-import numpy as np
-import math
-import transformations as tf
+from numpy_utils import transformations as tf
 import matplotlib.pyplot as plt
 
 from numpy_utils.accumulated_distance import *

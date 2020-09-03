@@ -20,13 +20,12 @@
 ########################################################################################################################
 
 import numpy as np
-import transformations as tf
+from numpy_utils import transformations as tf
 from trajectory.Trajectory import Trajectory
 from trajectory.TrajectoryEstimated import TrajectoryEstimated
 from trajectory.PlotLineStyle import PlotLineStyle
 from scipy.stats.distributions import chi2
 import matplotlib.pyplot as plt
-from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
 
 
 class TrajectoryNEES:
@@ -34,11 +33,13 @@ class TrajectoryNEES:
     NEES_q_vec = None
     ANEES_p = None
     ANEES_q = None
+    t_vec = None
 
     def __init__(self, traj_est, traj_err):
         assert (isinstance(traj_est, TrajectoryEstimated))
         assert (isinstance(traj_err, Trajectory))
 
+        self.t_vec = traj_est.t_vec
         self.NEES_p_vec = TrajectoryNEES.toNEES_arr(False, traj_est.Sigma_p_vec, traj_err.p_vec)
         self.NEES_q_vec = TrajectoryNEES.toNEES_arr(True, traj_est.Sigma_q_vec, traj_err.q_vec)
 
@@ -52,12 +53,12 @@ class TrajectoryNEES:
             fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
 
         ax1 = fig.add_subplot(211)
-        TrajectoryNEES.ax_plot_nees(ax1, self.NEES_p_vec, 3, conf_ival=0.997)
+        TrajectoryNEES.ax_plot_nees(ax1, 3, conf_ival=0.997, NEES_vec=self.NEES_p_vec, x_linespace=self.t_vec)
         ax1.set_ylabel('NEES pos')
         ax1.legend(shadow=True, fontsize='x-small')
         ax1.grid()
         ax2 = fig.add_subplot(212)
-        TrajectoryNEES.ax_plot_nees(ax2, self.NEES_q_vec, 3, conf_ival=0.997)
+        TrajectoryNEES.ax_plot_nees(ax2, 3, conf_ival=0.997, NEES_vec=self.NEES_q_vec, x_linespace=self.t_vec)
         ax2.set_ylabel('NEES rot')
         ax2.legend(shadow=True, fontsize='x-small')
         ax2.grid()
@@ -95,10 +96,15 @@ class TrajectoryNEES:
                 chi2.ppf(q=confidence_interval, df=degrees_of_freedom))
 
     @staticmethod
-    def ax_plot_nees(ax, NEES_vec, dim, conf_ival, color='r', ls=PlotLineStyle()):
+    def ax_plot_nees(ax, dim, conf_ival, NEES_vec, x_linespace=None, color='r', ls=PlotLineStyle()):
         l = NEES_vec.shape[0]
         ANEES = np.mean(NEES_vec)
-        x_linespace = range(0, l)
+
+        x_label = 'rel. t [sec]'
+        if x_linespace is None:
+            x_linespace = range(0, l)
+            x_label = ''
+
         conf_ival = float(conf_ival)
         TrajectoryPlotter.ax_plot_n_dim(ax, x_linespace=x_linespace, values=NEES_vec,
                                         colors=[color], labels=['ANEES={:.3f}'.format(ANEES)], ls=ls)
@@ -110,11 +116,12 @@ class TrajectoryNEES:
                                         colors=['k'],
                                         labels=['p={:.3f}->{:.3f}'.format(conf_ival, interval[1])],
                                         ls=PlotLineStyle(linewidth=0.5, linestyle='--'))
+
         TrajectoryPlotter.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * interval[0],
                                         colors=['k'],
                                         labels=['p={:.3f}->{:.3f}'.format(1.0 - conf_ival, interval[0])],
                                         ls=PlotLineStyle(linewidth=0.5, linestyle='--'))
-
+        ax.set_xlabel(x_label)
         pass
 
 
