@@ -32,7 +32,7 @@ class TrajectoryEvaluation:
         if not result_dir:
             result_dir = '.'
         if not prefix:
-            prefix = 'eval-'
+            prefix = ''
 
         self.report.save(result_dir + '/' + prefix + 'report.ini')
 
