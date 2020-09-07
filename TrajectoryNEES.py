@@ -20,6 +20,7 @@
 ########################################################################################################################
 
 import numpy as np
+import pandas as pandas
 from numpy_utils import transformations as tf
 from trajectory.Trajectory import Trajectory
 from trajectory.TrajectoryEstimated import TrajectoryEstimated
@@ -64,6 +65,22 @@ class TrajectoryNEES:
         ax2.grid()
 
         TrajectoryPlotConfig.show_save_figure(cfg, fig)
+
+    def save_to_CSV(self, filename):
+        t_rows, t_cols = self.t_vec.shape
+        p_rows, p_cols = self.NEES_p_vec.shape
+        q_rows, q_cols = self.NEES_q_vec.shape
+        assert (t_rows == p_rows)
+        assert (t_rows == q_rows)
+        assert (t_cols == 1)
+        assert (p_cols == 1)
+        assert (q_cols == 1)
+        data_frame = pandas.DataFrame({'t': self.t_vec[:, 0],
+                                       'nees_xyz': self.NEES_p_vec[:, 0],
+                                       'nees_rpy': self.NEES_q_vec[:, 0]})
+        data_frame.to_csv(filename, sep=',', index=False,
+                          header=['#t', 'nees_xyz', 'nees_rpy'],
+                          columns=['t', 'nees_xyz', 'nees_rpy'])
 
     # https://de.mathworks.com/help/fusion/ref/trackerrormetrics-system-object.html
     @staticmethod
@@ -162,6 +179,7 @@ class TrajectoryNEES_Test(unittest.TestCase):
         print('ANEES_q: ' + str(NEES.ANEES_q))
 
         NEES.plot(cfg=TrajectoryPlotConfig(show=True))
+        NEES.save_to_CSV('../sample_data/nees.csv')
 
 
 if __name__ == "__main__":
