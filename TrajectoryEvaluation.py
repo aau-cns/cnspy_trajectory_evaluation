@@ -12,6 +12,11 @@ class TrajectoryEvaluation:
 
     def __init__(self, fn_gt, fn_est, result_dir=None, prefix=None,
                  alignment_type=TrajectoryAlignmentTypes.se3, num_aligned_samples=-1):
+        if not result_dir:
+            result_dir = '.'
+        if not prefix:
+            prefix = ''
+
         self.report = EvaluationReport(directory=os.path.abspath(result_dir), fn_gt=os.path.abspath(fn_gt),
                                        fn_est=os.path.abspath(fn_est),
                                        alignment=str(alignment_type), num_aligned_samples=num_aligned_samples)
@@ -24,15 +29,12 @@ class TrajectoryEvaluation:
         ATE = AbsoluteTrajectoryError(traj_est=aligned.traj_est_matched_aligned, traj_gt=aligned.traj_gt_matched)
         self.report.ARMSE_p = ATE.ARMSE_p
         self.report.ARMSE_q = ATE.ARMSE_q_deg
+        ATE.traj_err.save_to_CSV(result_dir + '/' + prefix + 'err_matched_aligned.csv')
 
         NEES = TrajectoryNEES(traj_est=aligned.traj_est_matched_aligned, traj_err=ATE.traj_err)
         self.report.ANEES_p = NEES.ANEES_p
         self.report.ANEES_q = NEES.ANEES_q
-
-        if not result_dir:
-            result_dir = '.'
-        if not prefix:
-            prefix = ''
+        NEES.save_to_CSV(result_dir + '/' + prefix + 'nees_matched_aligned.csv')
 
         self.report.save(result_dir + '/' + prefix + 'report.ini')
 
