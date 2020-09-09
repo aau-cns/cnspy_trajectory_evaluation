@@ -159,13 +159,6 @@ from trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
 class AbsoluteTrajectoryError_Test(unittest.TestCase):
 
     def get_trajectories(self):
-        traj_est = Trajectory()
-        self.assertTrue(traj_est.load_from_CSV('../results/traj_est_matched_aligned.csv'))
-        traj_gt = Trajectory()
-        self.assertTrue(traj_gt.load_from_CSV('../results/traj_gt_matched_aligned.csv'))
-        return traj_est, traj_gt
-
-    def get_trajectories_2(self):
         traj_est = TrajectoryEstimated()
         self.assertTrue(traj_est.load_from_CSV('../sample_data/ID1-pose-est-cov.csv'))
         traj_gt = Trajectory()
@@ -183,23 +176,23 @@ class AbsoluteTrajectoryError_Test(unittest.TestCase):
         ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist),
                           angles=True)
         ATE.plot_pose_err(
-            cfg=TrajectoryPlotConfig(show=False, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist),
+            cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist),
             angles=True)
         print('ATE1 done')
 
     def test_ATE2(self):
-        traj_est, traj_gt = self.get_trajectories_2()
+        traj_est, traj_gt = self.get_trajectories()
 
         ATE = AbsoluteTrajectoryError(traj_est, traj_gt)
-        # ATE.plot_p_err()
-        # ATE.plot_p_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t))
-        # ATE.plot_rpy_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t))
-        # print('ATE2 done')
-        # ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
-        #                   angles=True)
-        # ATE.plot_pose_err(
-        #     cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
-        #     angles=True)
+        ATE.plot_p_err()
+        ATE.plot_p_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t))
+        ATE.plot_rpy_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t))
+        print('ATE2 done')
+        ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
+                          angles=True)
+        ATE.plot_pose_err(
+            cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
+            angles=True)
         print('ATE2 done:ARMSE p={:.2f}, q={:.2f}'.format(ATE.ARMSE_p, ATE.ARMSE_q_deg))
 
 
