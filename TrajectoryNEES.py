@@ -158,7 +158,7 @@ class TrajectoryNEES:
 ########################################################################################################################
 import unittest
 import time
-from AbsoluteTrajectoryError import AbsoluteTrajectoryError
+from trajectory_evaluation.AbsoluteTrajectoryError import AbsoluteTrajectoryError
 from trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
 from trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
 
@@ -170,7 +170,7 @@ class TrajectoryNEES_Test(unittest.TestCase):
         self.start_time = time.time()
 
     def stop(self, info="Process time"):
-        print str(info) + " took : " + str((time.time() - self.start_time)) + " [sec]"
+        print(str(info) + " took : " + str((time.time() - self.start_time)) + " [sec]")
 
     def get_trajectories(self):
         traj_est = TrajectoryEstimated()

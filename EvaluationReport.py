@@ -80,7 +80,7 @@ class EvaluationReport_Test(unittest.TestCase):
         self.start_time = time.time()
 
     def stop(self, info="Process time"):
-        print str(info) + " took : " + str((time.time() - self.start_time)) + " [sec]"
+        print(str(info) + " took : " + str((time.time() - self.start_time)) + " [sec]")
 
     def get_fn(self):
         fn_gt_csv = "../sample_data/ID1-pose-gt.csv"

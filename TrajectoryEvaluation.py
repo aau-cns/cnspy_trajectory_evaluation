@@ -20,12 +20,12 @@
 # os
 ########################################################################################################################
 import os
-from TrajectoryAlignmentTypes import TrajectoryAlignmentTypes
-from AlignedTrajectories import AlignedTrajectories
-from AssociatedTrajectories import AssociatedTrajectories
-from AbsoluteTrajectoryError import AbsoluteTrajectoryError
-from TrajectoryNEES import TrajectoryNEES
-from EvaluationReport import EvaluationReport
+from trajectory_evaluation.TrajectoryAlignmentTypes import TrajectoryAlignmentTypes
+from trajectory_evaluation.AlignedTrajectories import AlignedTrajectories
+from trajectory_evaluation.AssociatedTrajectories import AssociatedTrajectories
+from trajectory_evaluation.AbsoluteTrajectoryError import AbsoluteTrajectoryError
+from trajectory_evaluation.TrajectoryNEES import TrajectoryNEES
+from trajectory_evaluation.EvaluationReport import EvaluationReport
 from trajectory.Trajectory import Trajectory
 from trajectory.TrajectoryPlotter import TrajectoryPlotter
 from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
@@ -104,7 +104,7 @@ class TrajectoryEvaluation_Test(unittest.TestCase):
         self.start_time = time.time()
 
     def stop(self, info="Process time"):
-        print str(info) + " took : " + str((time.time() - self.start_time)) + " [sec]"
+        print(str(info) + " took : " + str((time.time() - self.start_time)) + " [sec]")
 
     def get_fn(self):
         fn_gt_csv = "../sample_data/ID1-pose-gt.csv"

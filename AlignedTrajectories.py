@@ -70,7 +70,7 @@ class AlignedTrajectories_Test(unittest.TestCase):
         self.start_time = time.time()
 
     def stop(self):
-        print "Process time: " + str((time.time() - self.start_time))
+        print("Process time: " + str((time.time() - self.start_time)))
 
     def get_associated(self):
         fn_gt_csv = "../sample_data/ID1-pose-gt.csv"
