@@ -100,9 +100,13 @@ class TrajectoryNEES:
         if is_angle:
             err = np.array(tf.euler_from_quaternion(err, 'rzyx'))
 
-        P_inv = np.linalg.inv(P)
+        tr = np.trace(P)
 
-        nees = np.matmul(np.matmul(err.reshape(1, 3), P_inv), err.reshape(3, 1))
+        if tr < 1e-9:
+            nees = 0
+        else:
+            P_inv = np.linalg.inv(P)
+            nees = np.matmul(np.matmul(err.reshape(1, 3), P_inv), err.reshape(3, 1))
 
         return nees
 
