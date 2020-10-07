@@ -30,6 +30,7 @@ class TrajectoryAlignmentTypes(Enum):
     sim3 = 'sim3'
     se3 = 'se3'
     posyaw = 'posyaw'
+    pos = 'pos'
     none = 'none'
 
     def __str__(self):
@@ -72,6 +73,9 @@ class TrajectoryAlignmentTypes(Enum):
             R, t = SpatialAlignement.align_SE3(p_es, p_gt, q_es, q_gt, num_frames)
         elif method == TrajectoryAlignmentTypes.posyaw:
             R, t = SpatialAlignement.align_position_yaw(p_es, p_gt, q_es, q_gt, num_frames)
+        elif method == TrajectoryAlignmentTypes.pos:
+            R, t = SpatialAlignement.align_SE3(p_es, p_gt, q_es, q_gt, num_frames)
+            R = np.identity(3)
         elif method == TrajectoryAlignmentTypes.none:
             R = np.identity(3)
             t = np.zeros((3,))
