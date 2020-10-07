@@ -96,13 +96,19 @@ class TrajectoryNEES:
         return nees_arr
 
     @staticmethod
+    def quat2theta(q):
+        theta = 2 * (q[:3] / q[3])
+        return theta
+
+    @staticmethod
     def toNEES(is_angle, P, err):
         if is_angle:
-            err = np.array(tf.euler_from_quaternion(err, 'rzyx'))
+            err = TrajectoryNEES.quat2theta(err)
+            # err = np.array(tf.euler_from_quaternion(err, 'rzyx'))
 
         tr = np.trace(P)
 
-        if tr < 1e-9:
+        if tr < 1e-16:
             nees = 0
         else:
             P_inv = np.linalg.inv(P)
@@ -154,6 +160,7 @@ import unittest
 import time
 from AbsoluteTrajectoryError import AbsoluteTrajectoryError
 from trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
+from trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
 
 
 class TrajectoryNEES_Test(unittest.TestCase):
@@ -176,6 +183,7 @@ class TrajectoryNEES_Test(unittest.TestCase):
         self.start()
         traj_est, traj_gt = self.get_trajectories()
         ATE = AbsoluteTrajectoryError(traj_est, traj_gt)
+        print('ARMSE p={:.2f}, q={:.2f}'.format(ATE.ARMSE_p, ATE.ARMSE_q_deg))
         self.stop('Loading + ATE')
         self.start()
         NEES = TrajectoryNEES(ATE.traj_est, ATE.traj_err)
@@ -185,6 +193,9 @@ class TrajectoryNEES_Test(unittest.TestCase):
 
         NEES.plot(cfg=TrajectoryPlotConfig(show=True))
         NEES.save_to_CSV('../sample_data/nees.csv')
+        ATE.plot_pose_err(
+            cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
+            angles=True)
 
 
 if __name__ == "__main__":
