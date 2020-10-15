@@ -92,7 +92,12 @@ class TrajectoryNEES:
         l = err_arr.shape[0]
         nees_arr = np.zeros((l, 1))
         for i in range(0, l):
-            nees_arr[i] = TrajectoryNEES.toNEES(is_angle=is_angle, P=P_arr[i], err=err_arr[i])
+            try:
+                nees_arr[i] = TrajectoryNEES.toNEES(is_angle=is_angle, P=P_arr[i], err=err_arr[i])
+            except np.linalg.LinAlgError:
+                print("TrajectoryNEES.toNEES(): covariance causes np.linalg.LinAlgError! ")
+                print(P_arr[i])
+
         return nees_arr
 
     @staticmethod
@@ -107,8 +112,10 @@ class TrajectoryNEES:
             # err = np.array(tf.euler_from_quaternion(err, 'rzyx'))
 
         tr = np.trace(P)
-
+        eig_vals, eig_vec = np.linalg.eig(P)
         if tr < 1e-16:
+            nees = 0
+        elif any(eig_vals < 0):
             nees = 0
         else:
             P_inv = np.linalg.inv(P)
