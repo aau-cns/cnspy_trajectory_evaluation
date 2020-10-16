@@ -22,6 +22,7 @@
 # !/usr/bin/env python
 
 import pandas as pd
+import numpy as np
 
 # initialize a dataframe
 df = pd.DataFrame(
@@ -44,6 +45,8 @@ print('\nNumpy Array2\n----------\n', arr2)
 students = [('jack', 34, 'Sydeny'),
             ('Riti', 30, 'Delhi'),
             ('Andi', 16, 'New York'),
+            ('Sepp', 16, 'New Orleans'),
+            ('Nancy', 16, 'New Orleans'),
             ('Hias', 1, 'New Flork'),
             ('Hans', 22, 'New Dork'),
             ('Franz', 39, 'Old Yorl')]
@@ -56,3 +59,46 @@ print(dfObj)
 print('select just some rows: ')
 rowData = dfObj.loc[[0, 2], :]
 print(rowData)
+
+print('sort: ')
+dfObj.sort_values(by=['Age'])
+print(dfObj)
+
+print('select just a column: ')
+colData = dfObj.get(['Age'])
+print(colData)
+print('col values:')
+colValues = colData.to_numpy()  # same as .values
+print(colValues)
+print('col values unique:')
+colValues = np.unique(colValues)
+print(colValues)
+
+print('select just a column with condition: ')
+colData = dfObj.loc[dfObj['Age'] > 16]
+print(colData)
+
+print('select just a column with condition: ')
+colData = dfObj.loc[dfObj['Age'] == 16]
+print(colData)
+
+print('select just a column with multiple conditions: ')
+colData = colData.loc[dfObj['City'] == 'New Orleans']
+print(colData)
+
+print('print cities: ')
+print(colData['City'])
+
+df = pd.DataFrame({'angles': [0, 3, 4],
+                   'degrees': [360, 180, 360]})
+
+print(df)
+adegrees = df['degrees'].mean()
+print('mean deg: ' + str(adegrees))
+
+df2 = df + df
+
+print(df2)
+
+df2['adegrees'] = adegrees
+print(df2)
