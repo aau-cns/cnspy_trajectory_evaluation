@@ -46,8 +46,12 @@ class AssociatedTrajectories:
         self.csv_df_est = CSV2DataFrame(filename=fn_est)
         assert (self.csv_df_est.data_loaded)
 
-        t_vec_gt = self.csv_df_gt.data_frame.as_matrix(['t'])
-        t_vec_est = self.csv_df_est.data_frame.as_matrix(['t'])
+        # FIX(scm): for newer versions as_matrix is deprecated, using to_numpy instead
+        # from https://stackoverflow.com/questions/60164560/attributeerror-series-object-has-no-attribute-as-matrix-why-is-it-error
+        # t_vec_gt = self.csv_df_gt.data_frame.as_matrix(['t'])
+        # t_vec_est = self.csv_df_est.data_frame.as_matrix(['t'])
+        t_vec_gt = self.csv_df_gt.data_frame[['t']].to_numpy()
+        t_vec_est = self.csv_df_est.data_frame[['t']].to_numpy()
         idx_est, idx_gt, t_est_matched, t_gt_matched = TimestampAssociation.associate_timestamps(
             t_vec_est,
             t_vec_gt)
