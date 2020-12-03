@@ -20,7 +20,7 @@
 # numpy, matplotlib
 ########################################################################################################################
 import os
-
+from sys import version_info
 from csv2dataframe.CSV2DataFrame import CSV2DataFrame
 from ros_csv_formats.CSVFormat import CSVFormat
 from timestamp_association.TimestampAssociation import TimestampAssociation
@@ -46,12 +46,15 @@ class AssociatedTrajectories:
         self.csv_df_est = CSV2DataFrame(filename=fn_est)
         assert (self.csv_df_est.data_loaded)
 
-        # FIX(scm): for newer versions as_matrix is deprecated, using to_numpy instead
-        # from https://stackoverflow.com/questions/60164560/attributeerror-series-object-has-no-attribute-as-matrix-why-is-it-error
-        # t_vec_gt = self.csv_df_gt.data_frame.as_matrix(['t'])
-        # t_vec_est = self.csv_df_est.data_frame.as_matrix(['t'])
-        t_vec_gt = self.csv_df_gt.data_frame[['t']].to_numpy()
-        t_vec_est = self.csv_df_est.data_frame[['t']].to_numpy()
+        if version_info[0] < 3:
+            t_vec_gt = self.csv_df_gt.data_frame.as_matrix(['t'])
+            t_vec_est = self.csv_df_est.data_frame.as_matrix(['t'])
+        else:
+            # FIX(scm): for newer versions as_matrix is deprecated, using to_numpy instead
+            # from https://stackoverflow.com/questions/60164560/attributeerror-series-object-has-no-attribute-as-matrix-why-is-it-error
+            t_vec_gt = self.csv_df_gt.data_frame[['t']].to_numpy()
+            t_vec_est = self.csv_df_est.data_frame[['t']].to_numpy()
+
         idx_est, idx_gt, t_est_matched, t_gt_matched = TimestampAssociation.associate_timestamps(
             t_vec_est,
             t_vec_gt)
