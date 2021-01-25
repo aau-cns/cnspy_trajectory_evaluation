@@ -16,8 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+# adapted from:
+# * https://github.com/uzh-rpg/rpg_trajectory_evaluation/blob/master/src/rpg_trajectory_evaluation/align_trajectory.py
+#
 # Requirements:
-# numpy, matplotlib
+# numpy, numpy_utils
 ########################################################################################################################
 import numpy as np
 from numpy_utils import transformations as tf
@@ -26,9 +29,15 @@ from numpy_utils import transformations as tf
 class SpatialAlignement:
     @staticmethod
     def get_best_yaw(C):
-        '''
+        """
         maximize trace(Rz(theta) * C)
-        '''
+
+        Input:
+        C -- rotation matrix (3x3)
+
+        Output:
+        theta -- scalar in radians
+        """
         assert C.shape == (3, 3)
 
         A = C[0, 1] - C[1, 0]
@@ -39,6 +48,16 @@ class SpatialAlignement:
 
     @staticmethod
     def rot_z(theta):
+        """
+        create a rotation matrix, about the z-axis by theta radians
+
+        Input:
+        theta -- scalar in radians
+
+        Output:
+        R -- rotation matrix (3x3)
+        """
+
         R = tf.rotation_matrix(theta, [0, 0, 1])
         R = R[0:3, 0:3]
 
@@ -46,6 +65,17 @@ class SpatialAlignement:
 
     @staticmethod
     def get_indices(n_aligned, total_n):
+        """
+        creates a vector reaching from 0 to max(n_aligned, total_n)
+
+        Input:
+        n_aligned -- integer, desired number
+        total_n   -- max possible number
+
+        Output:
+        idxs -- vector 1xN of scalars
+        """
+
         if n_aligned == -1:
             idxs = np.arange(0, total_n)
         else:
@@ -53,14 +83,25 @@ class SpatialAlignement:
         return idxs
 
     @staticmethod
-    def align_position_yaw_single(p_es, p_gt, q_es, q_gt):
-        '''
+    def align_position_yaw_single(est_p_arr, gt_p_arr, est_q_arr, gt_q_arr):
+        """
         calcualte the 4DOF transformation: yaw R and translation t so that:
             gt = R * est + t
-        '''
+        Using only the first poses of est and gt
 
-        p_es_0, q_es_0 = p_es[0, :], q_es[0, :]
-        p_gt_0, q_gt_0 = p_gt[0, :], q_gt[0, :]
+        Input:
+        est_p_arr -- estimated trajectory positions (nx3) over n-time steps, numpy array type
+        gt_p_arr -- ground-truth trajectory positions (nx3) over n-time steps, numpy array type
+        est_q_arr -- estimated trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        gt_q_arr -- ground-truth trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+
+        Output:
+        R -- rotation matrix (3x3)     (R_gt_est)
+        t -- translation vector (3x1)  (t_gt_est_in_gt)
+        """
+
+        p_es_0, q_es_0 = est_p_arr[0, :], est_q_arr[0, :]
+        p_gt_0, q_gt_0 = gt_p_arr[0, :], gt_q_arr[0, :]
         g_rot = tf.quaternion_matrix(q_gt_0)
         g_rot = g_rot[0:3, 0:3]
         est_rot = tf.quaternion_matrix(q_es_0)
@@ -74,14 +115,32 @@ class SpatialAlignement:
         return R, t
 
     @staticmethod
-    def align_position_yaw(p_es, p_gt, q_es, q_gt, n_aligned=1):
+    def align_position_yaw(est_p_arr, gt_p_arr, est_q_arr, gt_q_arr, n_aligned=1):
+        """
+        calcualte the 4DOF transformation: yaw R and translation t so that:
+            gt = R * est + t
+        Using only the first poses of est and gt
+
+        Input:
+        est_p_arr -- estimated trajectory positions (nx3) over n-time steps, numpy array type
+        gt_p_arr -- ground-truth trajectory positions (nx3) over n-time steps, numpy array type
+        est_q_arr -- estimated trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        gt_q_arr -- ground-truth trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        n_aligned -- if 1, only the first matched pair will be used, otherwise align_Umeyama() with the a certain amount
+                     will be called.
+
+        Output:
+        R -- rotation matrix (3x3)     (R_gt_est)
+        t -- translation vector (3x1)  (t_gt_est_in_gt)
+        """
+
         if n_aligned == 1:
-            R, t = SpatialAlignement.align_position_yaw_single(p_es, p_gt, q_es, q_gt)
+            R, t = SpatialAlignement.align_position_yaw_single(est_p_arr, gt_p_arr, est_q_arr, gt_q_arr)
             return R, t
         else:
-            idxs = SpatialAlignement.get_indices(n_aligned, p_es.shape[0])
-            est_pos = p_es[idxs, 0:3]
-            gt_pos = p_gt[idxs, 0:3]
+            idxs = SpatialAlignement.get_indices(n_aligned, est_p_arr.shape[0])
+            est_pos = est_p_arr[idxs, 0:3]
+            gt_pos = gt_p_arr[idxs, 0:3]
             _, R, t = SpatialAlignement.align_Umeyama(gt_pos, est_pos, known_scale=True,
                                                       yaw_only=True)  # note the order
             t = np.array(t)
@@ -90,15 +149,25 @@ class SpatialAlignement:
             return R, t
 
     @staticmethod
-    def align_SE3_single(p_es, p_gt, q_es, q_gt):
-        '''
+    def align_SE3_single(est_p_arr, gt_p_arr, est_q_arr, gt_q_arr):
+        """
         Calculate SE3 transformation R and t so that:
             gt = R * est + t
         Using only the first poses of est and gt
-        '''
 
-        p_es_0, q_es_0 = p_es[0, :], q_es[0, :]
-        p_gt_0, q_gt_0 = p_gt[0, :], q_gt[0, :]
+        Input:
+        est_p_arr -- estimated trajectory positions (nx3) over n-time steps, numpy array type
+        gt_p_arr -- ground-truth trajectory positions (nx3) over n-time steps, numpy array type
+        est_q_arr -- estimated trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        gt_q_arr -- ground-truth trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+
+        Output:
+        R -- rotation matrix (3x3)     (R_gt_est)
+        t -- translation vector (3x1)  (t_gt_est_in_gt)
+        """
+
+        p_es_0, q_es_0 = est_p_arr[0, :], est_q_arr[0, :]
+        p_gt_0, q_gt_0 = gt_p_arr[0, :], gt_q_arr[0, :]
 
         g_rot = tf.quaternion_matrix(q_gt_0)
         g_rot = g_rot[0:3, 0:3]
@@ -111,18 +180,30 @@ class SpatialAlignement:
         return R, t
 
     @staticmethod
-    def align_SE3(p_es, p_gt, q_es, q_gt, n_aligned=-1):
-        '''
-        Calculate SE3 transformation R and t so that:
+    def align_SE3(est_p_arr, gt_p_arr, est_q_arr, gt_q_arr, n_aligned=-1):
+        """
+            Calculate SE3 transformation R and t so that:
             gt = R * est + t
-        '''
+
+        Input:
+        est_p_arr -- estimated trajectory positions (nx3) over n-time steps, numpy array type
+        gt_p_arr -- ground-truth trajectory positions (nx3) over n-time steps, numpy array type
+        est_q_arr -- estimated trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        gt_q_arr -- ground-truth trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        n_aligned -- if 1, only the first matched pair will be used, otherwise align_Umeyama() with the a certain amount
+                     will be called.
+
+        Output:
+        R -- rotation matrix (3x3)     (R_gt_est)
+        t -- translation vector (3x1)  (t_gt_est_in_gt)
+        """
         if n_aligned == 1:
-            R, t = SpatialAlignement.align_SE3_single(p_es, p_gt, q_es, q_gt)
+            R, t = SpatialAlignement.align_SE3_single(est_p_arr, gt_p_arr, est_q_arr, gt_q_arr)
             return R, t
         else:
-            idxs = SpatialAlignement.get_indices(n_aligned, p_es.shape[0])
-            est_pos = p_es[idxs, 0:3]
-            gt_pos = p_gt[idxs, 0:3]
+            idxs = SpatialAlignement.get_indices(n_aligned, est_p_arr.shape[0])
+            est_pos = est_p_arr[idxs, 0:3]
+            gt_pos = gt_p_arr[idxs, 0:3]
             s, R, t = SpatialAlignement.align_Umeyama(gt_pos, est_pos,
                                                       known_scale=True)  # note the order
             t = np.array(t)
@@ -131,35 +212,33 @@ class SpatialAlignement:
             return R, t
 
     @staticmethod
-    def align_Umeyama(model, data, known_scale=False, yaw_only=False):
+    def align_Umeyama(gt_pos_arr, est_pos_arr, known_scale=False, yaw_only=False):
         """Implementation of the paper: S. Umeyama, Least-Squares Estimation
         of Transformation Parameters Between Two Point Patterns,
         IEEE Trans. Pattern Anal. Mach. Intell., vol. 13, no. 4, 1991.
 
-        model = s * R * data + t
+        gt_pos_arr = s * R * est_pos_arr + t
 
         Input:
-        model -- first trajectory (nx3), numpy array type
-        data -- second trajectory (nx3), numpy array type
+        gt_pos_arr -- ground-truth trajectory positions (nx3) over n-time steps, numpy array type
+        est_pos_arr -- estimated trajectory positions (nx3) over n-time steps, numpy array type
 
         Output:
         s -- scale factor (scalar)
-        R -- rotation matrix (3x3)
-        t -- translation vector (3x1)
-        t_error -- translational error per point (1xn)
-
+        R -- rotation matrix (3x3)     (R_gt_est)
+        t -- translation vector (3x1)  (t_gt_est_in_gt)
         """
 
         # substract mean
-        mu_M = model.mean(0)
-        mu_D = data.mean(0)
-        model_zerocentered = model - mu_M
-        data_zerocentered = data - mu_D
-        n = np.shape(model)[0]
+        mu_M = gt_pos_arr.mean(0)
+        mu_D = est_pos_arr.mean(0)
+        model_zerocentered = gt_pos_arr - mu_M
+        data_zerocentered = est_pos_arr - mu_D
+        n = np.shape(gt_pos_arr)[0]
 
         # correlation
         C = 1.0 / n * np.dot(model_zerocentered.transpose(), data_zerocentered)
-        sigma2 = 1.0 / n * np.multiply(data_zerocentered, data_zerocentered).sum()
+        Sigma2 = 1.0 / n * np.multiply(data_zerocentered, data_zerocentered).sum()
         U_svd, D_svd, V_svd = np.linalg.linalg.svd(C)
         D_svd = np.diag(D_svd)
         V_svd = np.transpose(V_svd)
@@ -178,21 +257,30 @@ class SpatialAlignement:
         if known_scale:
             s = 1
         else:
-            s = 1.0 / sigma2 * np.trace(np.dot(D_svd, S))
+            s = 1.0 / Sigma2 * np.trace(np.dot(D_svd, S))
 
         t = mu_M - s * np.dot(R, mu_D)
 
         return s, R, t
 
     @staticmethod
-    def align_SIM3(p_es, p_gt, n_aligned=-1):
-        '''
+    def align_SIM3(est_p_arr, gt_p_arr, n_aligned=-1):
+        """
         align by similarity transformation
         calculate s, R, t so that:
             gt = R * s * est + t
-        '''
-        idxs = SpatialAlignement.get_indices(n_aligned, p_es.shape[0])
-        est_pos = p_es[idxs, 0:3]
-        gt_pos = p_gt[idxs, 0:3]
+
+        Input:
+        est_p_arr -- estimated trajectory positions (nx3) over n-time steps, numpy array type
+        gt_p_arr -- ground-truth trajectory positions (nx3) over n-time steps, numpy array type
+
+        Output:
+        s -- scale factor (scalar)
+        R -- rotation matrix (3x3)     (R_gt_est)
+        t -- translation vector (3x1)  (t_gt_est_in_gt)
+        """
+        idxs = SpatialAlignement.get_indices(n_aligned, est_p_arr.shape[0])
+        est_pos = est_p_arr[idxs, 0:3]
+        gt_pos = gt_p_arr[idxs, 0:3]
         s, R, t = SpatialAlignement.align_Umeyama(gt_pos, est_pos)  # note the order
         return s, R, t

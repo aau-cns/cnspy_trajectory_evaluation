@@ -38,12 +38,13 @@ class TrajectoryAlignmentTypes(Enum):
 
     @staticmethod
     def trajectory_aligment(traj_est, traj_gt, method='sim3', num_frames=-1):
-        '''
+        """
         calculate s, R, t so that:
             gt = R * s * est + t
         method can be: sim3, se3, posyaw, none;
         n_aligned: -1 means using all the frames
-        '''
+
+        """
         assert (isinstance(traj_est, Trajectory))
         assert (isinstance(traj_gt, Trajectory))
 
