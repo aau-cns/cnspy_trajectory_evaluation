@@ -163,9 +163,9 @@ class AbsoluteTrajectoryError_Test(unittest.TestCase):
 
     def get_trajectories(self):
         traj_est = TrajectoryEstimated()
-        self.assertTrue(traj_est.load_from_CSV('../sample_data/ID1-pose-est-cov.csv'))
+        self.assertTrue(traj_est.load_from_CSV('./sample_data/ID1-pose-est-cov.csv'))
         traj_gt = Trajectory()
-        self.assertTrue(traj_gt.load_from_CSV('../sample_data/ID1-pose-gt.csv'))
+        self.assertTrue(traj_gt.load_from_CSV('./sample_data/ID1-pose-gt.csv'))
         return traj_est, traj_gt
 
     def test_ATE(self):

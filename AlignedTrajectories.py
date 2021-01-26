@@ -73,8 +73,8 @@ class AlignedTrajectories_Test(unittest.TestCase):
         print("Process time: " + str((time.time() - self.start_time)))
 
     def get_associated(self):
-        fn_gt_csv = "../sample_data/ID1-pose-gt.csv"
-        fn_est_csv = "../sample_data/ID1-pose-est-cov.csv"
+        fn_gt_csv = "./sample_data/ID1-pose-gt.csv"
+        fn_est_csv = "./sample_data/ID1-pose-est-cov.csv"
         return AssociatedTrajectories(fn_est=fn_est_csv, fn_gt=fn_gt_csv)
 
     def test_init(self):

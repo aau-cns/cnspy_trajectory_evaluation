@@ -181,9 +181,9 @@ class TrajectoryNEES_Test(unittest.TestCase):
 
     def get_trajectories(self):
         traj_est = TrajectoryEstimated()
-        self.assertTrue(traj_est.load_from_CSV('../sample_data/ID1-pose-est-cov.csv'))
+        self.assertTrue(traj_est.load_from_CSV('./sample_data/ID1-pose-est-cov.csv'))
         traj_gt = Trajectory()
-        self.assertTrue(traj_gt.load_from_CSV('../sample_data/ID1-pose-gt.csv'))
+        self.assertTrue(traj_gt.load_from_CSV('./sample_data/ID1-pose-gt.csv'))
         return traj_est, traj_gt
 
     def test_nees(self):
@@ -199,7 +199,7 @@ class TrajectoryNEES_Test(unittest.TestCase):
         print('ANEES_q: ' + str(NEES.ANEES_q))
 
         NEES.plot(cfg=TrajectoryPlotConfig(show=True))
-        NEES.save_to_CSV('../sample_data/nees.csv')
+        NEES.save_to_CSV('./results/nees.csv')
         ATE.plot_pose_err(
             cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
             angles=True)

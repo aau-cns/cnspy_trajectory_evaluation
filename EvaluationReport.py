@@ -83,22 +83,22 @@ class EvaluationReport_Test(unittest.TestCase):
         print(str(info) + " took : " + str((time.time() - self.start_time)) + " [sec]")
 
     def get_fn(self):
-        fn_gt_csv = "../sample_data/ID1-pose-gt.csv"
-        fn_est_csv = "../sample_data/ID1-pose-est-cov.csv"
+        fn_gt_csv = "./sample_data/ID1-pose-gt.csv"
+        fn_est_csv = "./sample_data/ID1-pose-est-cov.csv"
         return fn_gt_csv, fn_est_csv
 
     def test_init(self):
         self.start()
         report = EvaluationReport()
         report.directory = ''
-        report.fn_gt = "../sample_data/ID1-pose-gt.csv"
-        report.fn_est = "../sample_data/ID1-pose-est-cov.csv"
+        report.fn_gt = "./sample_data/ID1-pose-gt.csv"
+        report.fn_est = "./sample_data/ID1-pose-est-cov.csv"
         report.ANEES_p = 0.1
         report.ANEES_q = 0.2
         report.ARMSE_p = 0.3
         report.ARMSE_q = 0.4
 
-        fn = './eval-report.ini'
+        fn = './results/eval-report.ini'
         report.save(fn)
 
         report_ = EvaluationReport()
