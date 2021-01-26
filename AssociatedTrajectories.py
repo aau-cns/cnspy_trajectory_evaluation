@@ -22,7 +22,7 @@
 import os
 from sys import version_info
 from csv2dataframe.CSV2DataFrame import CSV2DataFrame
-from spatial_csv_formats.CSVFormat import CSVFormat
+from spatial_csv_formats.CSVFormatPose import CSVFormatPose
 from timestamp_association.TimestampAssociation import TimestampAssociation
 from trajectory.Trajectory import Trajectory
 from trajectory.TrajectoryEstimated import TrajectoryEstimated
@@ -84,7 +84,7 @@ class AssociatedTrajectories:
 
     def get_trajectories(self):
         # returns Tr_est_matched, Tr_gt_matched
-        if self.csv_df_est.format == CSVFormat.PoseWithCov:
+        if self.csv_df_est.format == CSVFormatPose.PoseWithCov:
             return TrajectoryEstimated(df=self.data_frame_est_matched), Trajectory(df=self.data_frame_gt_matched)
         else:
             return Trajectory(df=self.data_frame_est_matched), Trajectory(df=self.data_frame_gt_matched)
