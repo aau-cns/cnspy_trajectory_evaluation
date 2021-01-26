@@ -22,7 +22,7 @@
 import os
 from sys import version_info
 from csv2dataframe.CSV2DataFrame import CSV2DataFrame
-from ros_csv_formats.CSVFormat import CSVFormat
+from spatial_csv_formats.CSVFormat import CSVFormat
 from timestamp_association.TimestampAssociation import TimestampAssociation
 from trajectory.Trajectory import Trajectory
 from trajectory.TrajectoryEstimated import TrajectoryEstimated
