@@ -20,7 +20,7 @@
 # numpy, matplotlib
 ########################################################################################################################
 # !/usr/bin/env python
-
+from sys import version_info
 import pandas as pd
 import numpy as np
 
@@ -38,8 +38,10 @@ print('DataFrame\n----------\n', df)
 arr = df.values
 
 print('\nNumpy Array\n----------\n', arr)
-
-arr2 = df.as_matrix(['a', 'b'])
+if version_info[0] < 3:
+    arr2 = df.as_matrix(['a', 'b'])
+else:
+    arr2 = df[['a', 'b']].to_numpy()
 print('\nNumpy Array2\n----------\n', arr2)
 
 students = [('jack', 34, 'Sydeny'),

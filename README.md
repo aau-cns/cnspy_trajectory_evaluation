@@ -8,6 +8,10 @@ The CSV-file of the estimated trajectory must contain the pose uncertainty (`CSV
 
 ## Dependencies
 
+* [numpy]()
+* [matplotlib]()
+* [pandas]()
+* [scipy]()
 * [timestamp_association]()
 * [trajectory]()
 * [csv2dataframe]()
