@@ -24,7 +24,7 @@
 ########################################################################################################################
 import numpy as np
 from spatialmath import UnitQuaternion, SO3
-
+from trajectory.SpatialConverter import SpatialConverter
 
 class SpatialAlignement:
     @staticmethod
@@ -149,14 +149,14 @@ class SpatialAlignement:
         t -- translation vector (3x1)  (t_gt_est_in_gt)
         """
 
-        p_es_0, q_es_0 = est_p_arr[0, :], est_q_arr[0, :]
-        p_gt_0, q_gt_0 = gt_p_arr[0, :], gt_q_arr[0, :]
+        p_es_0 = est_p_arr[0, :]
+        p_gt_0 = gt_p_arr[0, :]
 
         indices = [3, 0, 1, 2]
-        q_est_0 = UnitQuaternion(v=q_es_0[indices])
-        q_gt_0 = UnitQuaternion(v=q_es_0[indices])
+        q_est_0 = SpatialConverter.HTMQ_quaternion_to_Quaternion(est_q_arr[0, :])
+        q_gt_0 = SpatialConverter.HTMQ_quaternion_to_Quaternion(gt_q_arr[0, :])
         q_0 = q_gt_0 * q_est_0.conj()
-        R = q_0.R
+        R = q_0.unit().R
         t = p_gt_0 - np.dot(R, p_es_0)
 
         return R, t

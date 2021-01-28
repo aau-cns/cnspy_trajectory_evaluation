@@ -22,10 +22,13 @@
 
 import numpy as np
 import pandas as pandas
+from spatialmath import base
+from trajectory.SpatialConverter import SpatialConverter
 from trajectory.Trajectory import Trajectory
 from trajectory.TrajectoryEstimated import TrajectoryEstimated
 from trajectory.PlotLineStyle import PlotLineStyle
 from scipy.stats.distributions import chi2
+
 import matplotlib.pyplot as plt
 
 
@@ -100,15 +103,45 @@ class TrajectoryNEES:
         return nees_arr
 
     @staticmethod
-    def quat2theta(q):
-        theta = 2 * (q[:3] / q[3])
+    def quat2theta(q_err):
+        """
+        converts a rotation represented by a quaternion in its small angle approximation
+
+        > S = R * Exp(theta)
+        > R(q_err) = R^T * S
+        > theta = Log(R(q_err))
+
+        refer to:
+        * "Quaternion kinematics for the error-state Kalman filter" by Joan Sola,
+            https://arxiv.org/pdf/1711.02508.pdf, chapter 4: Perturbations, derivatives and integrals
+
+        For really small perturbations the following should be a sufficient approximation:
+        > R(q) = I + skew(theta)   // Sola EQ. 193
+        > theta = unskew(R(q) - I)
+
+
+        """
+        R_ = SpatialConverter.HTMQ_quaternion_to_SO3(q_err)
+
+        # alternatives:
+        # - theta_1 = base.vex(R_.R - np.eye(3))
+        # - theta_2 = 2 * (q_err[:3] / q_err[3])
+        theta = base.trlog(R_.R, twist=True)
+
         return theta
 
     @staticmethod
     def toNEES(is_angle, P, err):
+        """
+        computes the Normalized Estimation Error Square (Mahalanobis Distance Squared)
+        In case of rotations (is_angle == True), the rotation is expected to be a
+        small angle approximation (refer to quat2theta). This means the corresponding covariance matrix (P) must be
+        representing the uncertainty of theta!
+
+
+        """
         if is_angle:
             err = TrajectoryNEES.quat2theta(err)
-            # err = np.array(tf.euler_from_quaternion(err, 'rzyx'))
 
         tr = np.trace(P)
         eig_vals, eig_vec = np.linalg.eig(P)
