@@ -230,10 +230,10 @@ class TrajectoryNEES_Test(unittest.TestCase):
         print('ANEES_p: ' + str(NEES.ANEES_p))
         print('ANEES_q: ' + str(NEES.ANEES_q))
 
-        NEES.plot(cfg=TrajectoryPlotConfig(show=True))
+        NEES.plot(cfg=TrajectoryPlotConfig(show=True, save_fn='./doc/pose-nees.png'))
         NEES.save_to_CSV('./results/nees.csv')
         ATE.plot_pose_err(
-            cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
+            cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t, save_fn='./doc/pose-err-plot.png'),
             angles=True)
 
 
