@@ -23,7 +23,7 @@
 # numpy, numpy_utils
 ########################################################################################################################
 import numpy as np
-from numpy_utils import transformations as tf
+from spatialmath import UnitQuaternion, SO3
 
 
 class SpatialAlignement:
@@ -45,23 +45,6 @@ class SpatialAlignement:
         theta = np.pi / 2 - np.arctan2(B, A)
 
         return theta
-
-    @staticmethod
-    def rot_z(theta):
-        """
-        create a rotation matrix, about the z-axis by theta radians
-
-        Input:
-        theta -- scalar in radians
-
-        Output:
-        R -- rotation matrix (3x3)
-        """
-
-        R = tf.rotation_matrix(theta, [0, 0, 1])
-        R = R[0:3, 0:3]
-
-        return R
 
     @staticmethod
     def get_indices(n_aligned, total_n):
@@ -102,14 +85,14 @@ class SpatialAlignement:
 
         p_es_0, q_es_0 = est_p_arr[0, :], est_q_arr[0, :]
         p_gt_0, q_gt_0 = gt_p_arr[0, :], gt_q_arr[0, :]
-        g_rot = tf.quaternion_matrix(q_gt_0)
-        g_rot = g_rot[0:3, 0:3]
-        est_rot = tf.quaternion_matrix(q_es_0)
-        est_rot = est_rot[0:3, 0:3]
 
-        C_R = np.dot(est_rot, g_rot.transpose())
-        theta = SpatialAlignement.get_best_yaw(C_R)
-        R = SpatialAlignement.rot_z(theta)
+        indices = [3, 0, 1, 2]
+        q_es_0 = UnitQuaternion(v=q_es_0[indices])
+        q_gt_0 = UnitQuaternion(v=q_gt_0[indices])
+        q_0 = q_es_0 * q_gt_0.conj()
+
+        theta = SpatialAlignement.get_best_yaw(q_0.R)
+        R = SO3.Rz(theta)
         t = p_gt_0 - np.dot(R, p_es_0)
 
         return R, t
@@ -169,12 +152,11 @@ class SpatialAlignement:
         p_es_0, q_es_0 = est_p_arr[0, :], est_q_arr[0, :]
         p_gt_0, q_gt_0 = gt_p_arr[0, :], gt_q_arr[0, :]
 
-        g_rot = tf.quaternion_matrix(q_gt_0)
-        g_rot = g_rot[0:3, 0:3]
-        est_rot = tf.quaternion_matrix(q_es_0)
-        est_rot = est_rot[0:3, 0:3]
-
-        R = np.dot(g_rot, np.transpose(est_rot))
+        indices = [3, 0, 1, 2]
+        q_est_0 = UnitQuaternion(v=q_es_0[indices])
+        q_gt_0 = UnitQuaternion(v=q_es_0[indices])
+        q_0 = q_gt_0 * q_est_0.conj()
+        R = q_0.R
         t = p_gt_0 - np.dot(R, p_es_0)
 
         return R, t
@@ -250,7 +232,7 @@ class SpatialAlignement:
         if yaw_only:
             rot_C = np.dot(data_zerocentered.transpose(), model_zerocentered)
             theta = SpatialAlignement.get_best_yaw(rot_C)
-            R = SpatialAlignement.rot_z(theta)
+            R = SO3.Rz(theta)
         else:
             R = np.dot(U_svd, np.dot(S, np.transpose(V_svd)))
 

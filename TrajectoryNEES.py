@@ -22,7 +22,6 @@
 
 import numpy as np
 import pandas as pandas
-from numpy_utils import transformations as tf
 from trajectory.Trajectory import Trajectory
 from trajectory.TrajectoryEstimated import TrajectoryEstimated
 from trajectory.PlotLineStyle import PlotLineStyle

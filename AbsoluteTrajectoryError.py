@@ -22,7 +22,7 @@
 # Requirements:
 # numpy, matplotlib
 ########################################################################################################################
-from numpy_utils import transformations as tf
+from spatialmath import UnitQuaternion, SO3, Quaternion
 import matplotlib.pyplot as plt
 
 from numpy_utils.accumulated_distance import *
@@ -130,15 +130,19 @@ class AbsoluteTrajectoryError:
         e_q_vec = np.zeros((len(e_p_rmse_vec), 4))  # x0, y0, z0, w0
 
         for i in range(np.shape(p_est)[0]):
-            R_wb_est = tf.matrix_from_quaternion(q_est[i, :])
-            R_wb_gt = tf.matrix_from_quaternion(q_gt[i, :])
+            indices = [3, 0, 1, 2]
+            q_wb_est = q_est[i, :]
+            q_wb_gt = q_gt[i, :]
+
+            q_est_0 = Quaternion(q_wb_est[indices])
+            q_wb_gt = Quaternion(q_wb_gt[indices])
 
             # R_wb_gt = R_wb_est * R_wb_err; w=World, b=Body
             # R_wb_err = R_wb_est' * R_wb_gt
-            e_R = np.matmul(R_wb_est.T, R_wb_gt)
-            e_q_vec[i, :] = tf.quaternion_from_matrix(e_R)
-            e_rpy_vec[i, :] = tf.euler_from_matrix(e_R, 'rxyz')
-            # e_q_rmse_deg_vec[i] = np.rad2deg(np.linalg.norm(tf.logmap_so3(e_R[:3, :3])))
+            q_wb_err = q_est_0.conj() * q_wb_gt
+            indices_inv = [1, 2, 3, 0]
+            e_q_vec[i, :] = q_wb_err.vec[indices_inv]
+            e_rpy_vec[i, :] = q_wb_err.unit().rpy(order='xyz')  # tf.euler_from_matrix(e_R, 'rxyz')
             e_q_rmse_deg_vec[i] = np.rad2deg(np.linalg.norm(e_rpy_vec[i, :]))
 
         # scale drift
