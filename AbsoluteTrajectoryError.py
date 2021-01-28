@@ -29,18 +29,7 @@ from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
 from trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
 from trajectory.Trajectory import Trajectory
 from trajectory.TrajectoryEstimated import TrajectoryEstimated
-from trajectory.SpatialConverter import SpatialConverter
-from spatialmath import SE3, SO3, UnitQuaternion
 
-
-# TODO: NEES requires a Covariance of the pose
-#  * PoseWithCovarianceStamped: covariance must be exported in CSV file and loaded:
-#    * New loader like TUMCSV2DataFrame: PoseCovCSV2DataFrame: load and store to CSV
-#    * rosbag2cvs: new header and extract features
-#  * NEES class
-#    * covariance inverse
-#    * mahanobis stuff
-#    * PoseCov-DataFrame needs to be matched
 
 class AbsoluteTrajectoryError:
     err_p_vec = None
@@ -123,13 +112,12 @@ class AbsoluteTrajectoryError:
     @staticmethod
     def compute_absolute_error(p_est, q_est, p_gt, q_gt):
         """
-        computes the absolute trajector error between a estimated and ground-truth trajectory
+        computes the absolute trajectory error between a estimated and ground-truth trajectory
         - The position error is global w.r.t to  ground truth
         - The orientation error is a local error/perturbation w.r.t to ground truth
         > p_AB_err = p_AB_est - p_AB_gt
         > R_AB_err = R_AB_gt' * R_AB_est
         """
-
         p_rows, p_cols = p_est.shape
         q_rows, q_cols = q_est.shape
         assert(p_est.shape == p_gt.shape)
@@ -166,7 +154,6 @@ class AbsoluteTrajectoryError:
             e_q_rmse_deg_vec[i] = np.rad2deg(np.linalg.norm(e_rpy_vec[i, :]))
 
         # scale drift
-
         dist_gt = total_distance(p_gt)
         dist_es = total_distance(p_est)
         e_scale = 1.0
@@ -184,6 +171,7 @@ import unittest
 from trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
 from trajectory.SpatialConverter import SpatialConverter
 from spatialmath import SO3
+
 class AbsoluteTrajectoryError_Test(unittest.TestCase):
 
     def get_trajectories(self):
