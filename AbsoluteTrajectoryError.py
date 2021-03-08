@@ -142,7 +142,7 @@ class AbsoluteTrajectoryError:
             q_wb_gt = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_wb_gt).unit()
 
             # Error definitions for local perturbation:
-            # "Quaternion kinematics for the error-state Kalman filter" by Joan Sola, Chapter 4.4.1
+            # "Quaternion kinematics for the error-state Kalman filter" by Joan Solà, Chapter 4.4.1
             # First:  S = R oplus theta  = R * Exp(theta); with R = reference/gt, theta = perturbation, S = estimate
             # R_wb_est =  R_wb_gt  * R_wb_err
             # R_wb_gt = R_wb_est * R_wb_err'
