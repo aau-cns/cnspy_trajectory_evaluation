@@ -36,21 +36,21 @@ class AbsoluteTrajectoryError:
     err_q_vec = None
     err_rpy_vec = None
     err_scale = None
-    rmse_p_vec = None
-    rmse_q_deg_vec = None  # degree
+    rmse_p_vec = None      # [m]
+    rmse_q_deg_vec = None  # [deg]
     t_vec = None
 
     traj_err = None
     traj_est = None
     traj_gt = None
-    ARMSE_p = None
-    ARMSE_q_deg = None
+    ARMSE_p = None          # [m]
+    ARMSE_q_deg = None      # [deg]
 
     def __init__(self, traj_est, traj_gt):
         assert (isinstance(traj_est, Trajectory))
         assert (isinstance(traj_gt, Trajectory))
 
-        assert (traj_est.num_elems() == traj_gt.num_elems())
+        assert traj_est.num_elems() == traj_gt.num_elems(), "Traj. have to be matched in time and aligned first"
 
         self.err_p_vec = np.abs(traj_gt.p_vec - traj_est.p_vec)
         # self.err_p_vec = traj_gt.p_vec.sub(traj_est.p_vec).abs()

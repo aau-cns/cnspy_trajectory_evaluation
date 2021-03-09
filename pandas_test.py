@@ -16,10 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# Requirements:
-# numpy, matplotlib
 ########################################################################################################################
-# !/usr/bin/env python
 from sys import version_info
 import pandas as pd
 import numpy as np
