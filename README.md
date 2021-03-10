@@ -5,6 +5,15 @@ The results can be plotted and will be saved as `EvaluationReport`.
 
 The CSV-file of the estimated trajectory must contain the pose uncertainty (`CSVFormatPose.PoseWithCov`). For the file format please refer to the [spatial_csv_formats]() package and the `CSVFormatPose.py` file. 
 
+## Installation
+
+Install the current code base from GitHub and pip install a link to that cloned copy
+```
+git clone https://gitlab.aau.at/aau-cns/py3_pkgs/trajectory_evaluation.git
+cd trajectory_evaluation
+pip install -e .
+```
+
 
 ## Dependencies
 

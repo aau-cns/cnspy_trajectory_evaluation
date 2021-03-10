@@ -1,0 +1,12 @@
+numpy
+scipy 
+tqdm 
+pandas 
+argparse 
+PyYAML 
+spatialmath-python
+[-e] git+https://gitlab.aau.at/aau-cns/py3_pkgs/timestamp_association.git#egg=timestamp_association
+[-e] git+https://gitlab.aau.at/aau-cns/py3_pkgs/trajectory.git#egg=trajectory
+[-e] git+https://gitlab.aau.at/aau-cns/py3_pkgs/csv2dataframe.git#egg=csv2dataframe
+[-e] git+https://gitlab.aau.at/aau-cns/py3_pkgs/ros_csv_formats.git#egg=ros_csv_formats
+
