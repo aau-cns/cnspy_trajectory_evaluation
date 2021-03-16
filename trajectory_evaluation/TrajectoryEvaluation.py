@@ -89,37 +89,3 @@ class TrajectoryEvaluation:
             NEES.plot(cfg=TrajectoryPlotConfig(show=show, close_figure=True, radians=False, save_fn=fn_NEES,
                                                plot_type=TrajectoryPlotTypes.plot_2D_over_t))
 
-
-########################################################################################################################
-#################################################### T E S T ###########################################################
-########################################################################################################################
-import unittest
-import time
-
-
-class TrajectoryEvaluation_Test(unittest.TestCase):
-    start_time = None
-
-    def start(self):
-        self.start_time = time.time()
-
-    def stop(self, info="Process time"):
-        print(str(info) + " took : " + str((time.time() - self.start_time)) + " [sec]")
-
-    def get_fn(self):
-        fn_gt_csv = "./sample_data/ID1-pose-gt.csv"
-        fn_est_csv = "./sample_data/ID1-pose-est-cov.csv"
-        return fn_gt_csv, fn_est_csv
-
-    def test_init(self):
-        self.start()
-        fn_gt_csv = "./sample_data/ID1-pose-gt.csv"
-        fn_est_csv = "./sample_data/ID1-pose-est-cov.csv"
-        eval = TrajectoryEvaluation(fn_gt_csv, fn_est_csv, result_dir='./results/eval', prefix='eval-ID1-',
-                                    alignment_type=TrajectoryAlignmentTypes.none)
-
-        self.stop()
-
-
-if __name__ == "__main__":
-    unittest.main()

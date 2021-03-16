@@ -16,15 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# Requirements:
-# numpy, pandas, numpy_utils, trajectory, scipy, matplotlib
 ########################################################################################################################
+import os
 import unittest
 import time
 from trajectory_evaluation.AbsoluteTrajectoryError import AbsoluteTrajectoryError
 from trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
 from trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
 from trajectory_evaluation.TrajectoryNEES import *
+
+SAMPLE_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_data')
 
 class TrajectoryNEES_Test(unittest.TestCase):
     start_time = None
@@ -37,9 +38,9 @@ class TrajectoryNEES_Test(unittest.TestCase):
 
     def get_trajectories(self):
         traj_est = TrajectoryEstimated()
-        self.assertTrue(traj_est.load_from_CSV('./sample_data/ID1-pose-est-cov.csv'))
+        self.assertTrue(traj_est.load_from_CSV(str(SAMPLE_DATA_DIR + '/ID1-pose-est-cov.csv')))
         traj_gt = Trajectory()
-        self.assertTrue(traj_gt.load_from_CSV('./sample_data/ID1-pose-gt.csv'))
+        self.assertTrue(traj_gt.load_from_CSV(str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')))
         return traj_est, traj_gt
 
     def test_nees(self):
@@ -54,10 +55,10 @@ class TrajectoryNEES_Test(unittest.TestCase):
         print('ANEES_p: ' + str(NEES.ANEES_p))
         print('ANEES_q: ' + str(NEES.ANEES_q))
 
-        NEES.plot(cfg=TrajectoryPlotConfig(show=True, save_fn='./doc/pose-nees.png'))
-        NEES.save_to_CSV('./results/nees.csv')
+        NEES.plot(cfg=TrajectoryPlotConfig(show=True, save_fn=str(SAMPLE_DATA_DIR + '/../../doc/pose-nees.png')))
+        NEES.save_to_CSV(str(SAMPLE_DATA_DIR + '/results/nees.csv'))
         ATE.plot_pose_err(
-            cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t, save_fn='./doc/pose-err-plot.png'),
+            cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t, save_fn=str(SAMPLE_DATA_DIR + '/../../doc/pose-err-plot.png')),
             angles=True)
 
 

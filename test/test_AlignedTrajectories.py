@@ -16,15 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# Requirements:
-# trajectory_evaluation
 ########################################################################################################################
+import os
 import unittest
 import time
 from trajectory.Trajectory import Trajectory
 from trajectory.TrajectoryPlotter import TrajectoryPlotter
 from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
 from trajectory_evaluation.AlignedTrajectories import *
+
+SAMPLE_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_data')
 
 class AlignedTrajectories_Test(unittest.TestCase):
     start_time = None
@@ -36,8 +37,8 @@ class AlignedTrajectories_Test(unittest.TestCase):
         print("Process time: " + str((time.time() - self.start_time)))
 
     def get_associated(self):
-        fn_gt_csv = "./sample_data/ID1-pose-gt.csv"
-        fn_est_csv = "./sample_data/ID1-pose-est-cov.csv"
+        fn_gt_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')
+        fn_est_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-est-cov.csv')
         return AssociatedTrajectories(fn_est=fn_est_csv, fn_gt=fn_gt_csv)
 
     def test_init(self):
@@ -48,7 +49,7 @@ class AlignedTrajectories_Test(unittest.TestCase):
     def test_align_trajectories(self):
         associated = self.get_associated()
         aligned = AlignedTrajectories(associated=associated)
-        aligned.save(result_dir='./results/')
+        aligned.save(result_dir=str(SAMPLE_DATA_DIR + '/results/'))
         traj_est_matched = Trajectory(df=associated.data_frame_est_matched)
         plot_gt = TrajectoryPlotter(traj_obj=aligned.traj_gt_matched)
         plot_est = TrajectoryPlotter(traj_obj=traj_est_matched)

@@ -16,13 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# Requirements:
-# configparser
 ########################################################################################################################
+import os
 import unittest
 import time
 from trajectory_evaluation.EvaluationReport import *
 
+SAMPLE_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_data')
 
 class EvaluationReport_Test(unittest.TestCase):
     start_time = None
@@ -34,22 +34,22 @@ class EvaluationReport_Test(unittest.TestCase):
         print(str(info) + " took : " + str((time.time() - self.start_time)) + " [sec]")
 
     def get_fn(self):
-        fn_gt_csv = "./sample_data/ID1-pose-gt.csv"
-        fn_est_csv = "./sample_data/ID1-pose-est-cov.csv"
+        fn_gt_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')
+        fn_est_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-est-cov.csv')
         return fn_gt_csv, fn_est_csv
 
     def test_init(self):
         self.start()
         report = EvaluationReport()
         report.directory = ''
-        report.fn_gt = "./sample_data/ID1-pose-gt.csv"
-        report.fn_est = "./sample_data/ID1-pose-est-cov.csv"
+        report.fn_gt = str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')
+        report.fn_est = str(SAMPLE_DATA_DIR + '/ID1-pose-est-cov.csv')
         report.ANEES_p = 0.1
         report.ANEES_q = 0.2
         report.ARMSE_p = 0.3
         report.ARMSE_q = 0.4
 
-        fn = './results/eval-report.ini'
+        fn = str(SAMPLE_DATA_DIR + '/results/eval-report.ini')
         report.save(fn)
 
         report_ = EvaluationReport()

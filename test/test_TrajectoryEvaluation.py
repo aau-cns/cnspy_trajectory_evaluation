@@ -17,9 +17,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 ########################################################################################################################
+import os
 import unittest
 import time
-from TrajectoryEvaluation.TrajectoryEvaluation import *
+from trajectory_evaluation.TrajectoryEvaluation import *
+
+SAMPLE_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_data')
 
 class TrajectoryEvaluation_Test(unittest.TestCase):
     start_time = None
@@ -31,15 +34,15 @@ class TrajectoryEvaluation_Test(unittest.TestCase):
         print(str(info) + " took : " + str((time.time() - self.start_time)) + " [sec]")
 
     def get_fn(self):
-        fn_gt_csv = "./sample_data/ID1-pose-gt.csv"
-        fn_est_csv = "./sample_data/ID1-pose-est-cov.csv"
+        fn_gt_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')
+        fn_est_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-est-cov.csv')
         return fn_gt_csv, fn_est_csv
 
     def test_init(self):
         self.start()
-        fn_gt_csv = "./sample_data/ID1-pose-gt.csv"
-        fn_est_csv = "./sample_data/ID1-pose-est-cov.csv"
-        eval = TrajectoryEvaluation(fn_gt_csv, fn_est_csv, result_dir='./results/eval', prefix='eval-ID1-',
+        fn_gt_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')
+        fn_est_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-est-cov.csv')
+        eval = TrajectoryEvaluation(fn_gt_csv, fn_est_csv, result_dir=str(SAMPLE_DATA_DIR + '/results/eval'), prefix='eval-ID1-',
                                     alignment_type=TrajectoryAlignmentTypes.none)
 
         self.stop()
