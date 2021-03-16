@@ -25,6 +25,8 @@ import pandas as pandas
 from spatialmath import base
 from trajectory.SpatialConverter import SpatialConverter
 from trajectory.Trajectory import Trajectory
+from trajectory.TrajectoryPlotter import TrajectoryPlotter
+from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
 from trajectory.TrajectoryEstimated import TrajectoryEstimated
 from trajectory.PlotLineStyle import PlotLineStyle
 from scipy.stats.distributions import chi2
