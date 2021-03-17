@@ -20,10 +20,10 @@
 import os
 import unittest
 import time
-from trajectory.Trajectory import Trajectory
-from trajectory.TrajectoryPlotter import TrajectoryPlotter
-from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
-from trajectory_evaluation.AlignedTrajectories import *
+from cnspy_trajectory.Trajectory import Trajectory
+from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
+from cnspy_trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
+from cnspy_trajectory_evaluation.AlignedTrajectories import *
 
 SAMPLE_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_data')
 

@@ -21,11 +21,11 @@
 ########################################################################################################################
 import os
 from sys import version_info
-from csv2dataframe.CSV2DataFrame import CSV2DataFrame
-from spatial_csv_formats.CSVFormatPose import CSVFormatPose
-from timestamp_association.TimestampAssociation import TimestampAssociation
-from trajectory.Trajectory import Trajectory
-from trajectory.TrajectoryEstimated import TrajectoryEstimated
+from cnspy_csv2dataframe.CSV2DataFrame import CSV2DataFrame
+from cnspy_spatial_csv_formats.CSVFormatPose import CSVFormatPose
+from cnspy_timestamp_association.TimestampAssociation import TimestampAssociation
+from cnspy_trajectory.Trajectory import Trajectory
+from cnspy_trajectory.TrajectoryEstimated import TrajectoryEstimated
 
 
 class AssociatedTrajectories:

@@ -19,9 +19,9 @@
 ########################################################################################################################
 import os
 import unittest
-from trajectory_evaluation.AbsoluteTrajectoryError import *
-from trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
-from trajectory.SpatialConverter import SpatialConverter
+from cnspy_trajectory_evaluation.AbsoluteTrajectoryError import *
+from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
+from cnspy_trajectory.SpatialConverter import SpatialConverter
 from spatialmath import SO3
 
 SAMPLE_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_data')

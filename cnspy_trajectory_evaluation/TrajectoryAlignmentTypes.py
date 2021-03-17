@@ -17,13 +17,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Requirements:
-# numpy, enum, trajectory, trajectory_evaluation
+# numpy, enum, cnspy_trajectory, cnspy_trajectory_evaluation
 ########################################################################################################################
 import numpy as np
 from enum import Enum
 
-from trajectory.Trajectory import Trajectory
-from trajectory_evaluation.SpatialAlignment import SpatialAlignement
+from cnspy_trajectory.Trajectory import Trajectory
+from cnspy_trajectory_evaluation.SpatialAlignment import SpatialAlignement
 
 
 class TrajectoryAlignmentTypes(Enum):

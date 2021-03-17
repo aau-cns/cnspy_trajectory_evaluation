@@ -20,7 +20,7 @@
 import os
 import unittest
 import time
-from trajectory_evaluation.EvaluationReport import *
+from cnspy_trajectory_evaluation.EvaluationReport import *
 
 SAMPLE_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_data')
 

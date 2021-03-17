@@ -17,12 +17,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Requirements:
-# trajectory_evaluation
+# cnspy_trajectory_evaluation
 ########################################################################################################################
 import os
 
-from trajectory_evaluation.AssociatedTrajectories import AssociatedTrajectories
-from trajectory_evaluation.TrajectoryAlignmentTypes import TrajectoryAlignmentTypes
+from cnspy_trajectory_evaluation.AssociatedTrajectories import AssociatedTrajectories
+from cnspy_trajectory_evaluation.TrajectoryAlignmentTypes import TrajectoryAlignmentTypes
 
 
 class AlignedTrajectories:

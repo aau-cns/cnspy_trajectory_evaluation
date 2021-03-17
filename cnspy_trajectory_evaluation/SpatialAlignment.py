@@ -20,11 +20,11 @@
 # * https://github.com/uzh-rpg/rpg_trajectory_evaluation/blob/master/src/rpg_trajectory_evaluation/align_trajectory.py
 #
 # Requirements:
-# numpy, numpy_utils
+# numpy, cnspy_numpy_utils
 ########################################################################################################################
 import numpy as np
 from spatialmath import UnitQuaternion, SO3
-from trajectory.SpatialConverter import SpatialConverter
+from cnspy_trajectory.SpatialConverter import SpatialConverter
 
 class SpatialAlignement:
     @staticmethod
@@ -73,10 +73,10 @@ class SpatialAlignement:
         Using only the first poses of est and gt
 
         Input:
-        est_p_arr -- estimated trajectory positions (nx3) over n-time steps, numpy array type
-        gt_p_arr -- ground-truth trajectory positions (nx3) over n-time steps, numpy array type
-        est_q_arr -- estimated trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
-        gt_q_arr -- ground-truth trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        est_p_arr -- estimated cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        gt_p_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        est_q_arr -- estimated cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        gt_q_arr -- ground-truth cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
 
         Output:
         R -- rotation matrix (3x3)     (R_gt_est)
@@ -105,10 +105,10 @@ class SpatialAlignement:
         Using only the first poses of est and gt
 
         Input:
-        est_p_arr -- estimated trajectory positions (nx3) over n-time steps, numpy array type
-        gt_p_arr -- ground-truth trajectory positions (nx3) over n-time steps, numpy array type
-        est_q_arr -- estimated trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
-        gt_q_arr -- ground-truth trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        est_p_arr -- estimated cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        gt_p_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        est_q_arr -- estimated cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        gt_q_arr -- ground-truth cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
         n_aligned -- if 1, only the first matched pair will be used, otherwise align_Umeyama() with the a certain amount
                      will be called.
 
@@ -139,10 +139,10 @@ class SpatialAlignement:
         Using only the first poses of est and gt
 
         Input:
-        est_p_arr -- estimated trajectory positions (nx3) over n-time steps, numpy array type
-        gt_p_arr -- ground-truth trajectory positions (nx3) over n-time steps, numpy array type
-        est_q_arr -- estimated trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
-        gt_q_arr -- ground-truth trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        est_p_arr -- estimated cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        gt_p_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        est_q_arr -- estimated cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        gt_q_arr -- ground-truth cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
 
         Output:
         R -- rotation matrix (3x3)     (R_gt_est)
@@ -168,10 +168,10 @@ class SpatialAlignement:
             gt = R * est + t
 
         Input:
-        est_p_arr -- estimated trajectory positions (nx3) over n-time steps, numpy array type
-        gt_p_arr -- ground-truth trajectory positions (nx3) over n-time steps, numpy array type
-        est_q_arr -- estimated trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
-        gt_q_arr -- ground-truth trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        est_p_arr -- estimated cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        gt_p_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        est_q_arr -- estimated cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
+        gt_q_arr -- ground-truth cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
         n_aligned -- if 1, only the first matched pair will be used, otherwise align_Umeyama() with the a certain amount
                      will be called.
 
@@ -202,8 +202,8 @@ class SpatialAlignement:
         gt_pos_arr = s * R * est_pos_arr + t
 
         Input:
-        gt_pos_arr -- ground-truth trajectory positions (nx3) over n-time steps, numpy array type
-        est_pos_arr -- estimated trajectory positions (nx3) over n-time steps, numpy array type
+        gt_pos_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        est_pos_arr -- estimated cnspy_trajectory positions (nx3) over n-time steps, numpy array type
 
         Output:
         s -- scale factor (scalar)
@@ -253,8 +253,8 @@ class SpatialAlignement:
             gt = R * s * est + t
 
         Input:
-        est_p_arr -- estimated trajectory positions (nx3) over n-time steps, numpy array type
-        gt_p_arr -- ground-truth trajectory positions (nx3) over n-time steps, numpy array type
+        est_p_arr -- estimated cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        gt_p_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
 
         Output:
         s -- scale factor (scalar)

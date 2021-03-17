@@ -17,18 +17,18 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Requirements:
-# numpy, pandas, numpy_utils, trajectory, scipy, matplotlib
+# numpy, pandas, cnspy_numpy_utils, cnspy_trajectory, scipy, matplotlib
 ########################################################################################################################
 
 import numpy as np
 import pandas as pandas
 from spatialmath import base
-from trajectory.SpatialConverter import SpatialConverter
-from trajectory.Trajectory import Trajectory
-from trajectory.TrajectoryPlotter import TrajectoryPlotter
-from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
-from trajectory.TrajectoryEstimated import TrajectoryEstimated
-from trajectory.PlotLineStyle import PlotLineStyle
+from cnspy_trajectory.SpatialConverter import SpatialConverter
+from cnspy_trajectory.Trajectory import Trajectory
+from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
+from cnspy_trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
+from cnspy_trajectory.TrajectoryEstimated import TrajectoryEstimated
+from cnspy_trajectory.PlotLineStyle import PlotLineStyle
 from scipy.stats.distributions import chi2
 
 import matplotlib.pyplot as plt

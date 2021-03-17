@@ -1,4 +1,4 @@
-# Trajectory Evaluation
+# cnspy_trajectory_evaluation
 
 The class `TrajectoryEvaluation` evaluates two trajectories given by a CSV-file (estimated and ground-truth), associates their timestamps, aligns them according to a specified scheme, and computes the absolute trajectory error (ATE) and the normalized estimation error square (NEES). The NEES is based on the uncertainty of the estimated trajectory and the ATE. 
 The results can be plotted and will be saved as `EvaluationReport`.
@@ -9,8 +9,8 @@ The CSV-file of the estimated trajectory must contain the pose uncertainty (`CSV
 
 Install the current code base from GitHub and pip install a link to that cloned copy
 ```
-git clone https://gitlab.aau.at/aau-cns/py3_pkgs/trajectory_evaluation.git
-cd trajectory_evaluation
+git clone https://gitlab.aau.at/aau-cns/py3_pkgs/cnspy_trajectory_evaluation.git
+cd cnspy_trajectory_evaluation
 pip install -e .
 ```
 

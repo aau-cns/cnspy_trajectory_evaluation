@@ -24,13 +24,13 @@
 ########################################################################################################################
 import matplotlib.pyplot as plt
 
-from numpy_utils.accumulated_distance import *
-from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
-from trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
-from trajectory.Trajectory import Trajectory
-from trajectory.TrajectoryPlotter import TrajectoryPlotter
-from trajectory.SpatialConverter import SpatialConverter
-from trajectory.TrajectoryEstimated import TrajectoryEstimated
+from cnspy_numpy_utils.accumulated_distance import *
+from cnspy_trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
+from cnspy_trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
+from cnspy_trajectory.Trajectory import Trajectory
+from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
+from cnspy_trajectory.SpatialConverter import SpatialConverter
+from cnspy_trajectory.TrajectoryEstimated import TrajectoryEstimated
 
 
 class AbsoluteTrajectoryError:
@@ -114,7 +114,7 @@ class AbsoluteTrajectoryError:
     @staticmethod
     def compute_absolute_error(p_est, q_est, p_gt, q_gt):
         """
-        computes the absolute trajectory error between a estimated and ground-truth trajectory
+        computes the absolute cnspy_trajectory error between a estimated and ground-truth cnspy_trajectory
         - The position error is global w.r.t to  ground truth
         - The orientation error is a local error/perturbation w.r.t to ground truth
         > p_AB_err = p_AB_est - p_AB_gt

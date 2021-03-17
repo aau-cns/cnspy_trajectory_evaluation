@@ -20,16 +20,16 @@
 # os
 ########################################################################################################################
 import os
-from trajectory_evaluation.TrajectoryAlignmentTypes import TrajectoryAlignmentTypes
-from trajectory_evaluation.AlignedTrajectories import AlignedTrajectories
-from trajectory_evaluation.AssociatedTrajectories import AssociatedTrajectories
-from trajectory_evaluation.AbsoluteTrajectoryError import AbsoluteTrajectoryError
-from trajectory_evaluation.TrajectoryNEES import TrajectoryNEES
-from trajectory_evaluation.EvaluationReport import EvaluationReport
-from trajectory.Trajectory import Trajectory
-from trajectory.TrajectoryPlotter import TrajectoryPlotter
-from trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
-from trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
+from cnspy_trajectory_evaluation.TrajectoryAlignmentTypes import TrajectoryAlignmentTypes
+from cnspy_trajectory_evaluation.AlignedTrajectories import AlignedTrajectories
+from cnspy_trajectory_evaluation.AssociatedTrajectories import AssociatedTrajectories
+from cnspy_trajectory_evaluation.AbsoluteTrajectoryError import AbsoluteTrajectoryError
+from cnspy_trajectory_evaluation.TrajectoryNEES import TrajectoryNEES
+from cnspy_trajectory_evaluation.EvaluationReport import EvaluationReport
+from cnspy_trajectory.Trajectory import Trajectory
+from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
+from cnspy_trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
+from cnspy_trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
 
 
 class TrajectoryEvaluation:
