@@ -1,15 +1,15 @@
 # cnspy_trajectory_evaluation
 
-The class `TrajectoryEvaluation` evaluates two trajectories given by a CSV-file (estimated and ground-truth), associates their timestamps, aligns them according to a specified scheme, and computes the absolute trajectory error (ATE) and the normalized estimation error square (NEES). The NEES is based on the uncertainty of the estimated trajectory and the ATE. 
-The results can be plotted and will be saved as `EvaluationReport`.
+The class [TrajectoryEvaluation](./cnspy_trajectory_evaluation/TrajectoryEvaluation.py) evaluates two trajectories given by a CSV-file (estimated and ground-truth), associates their timestamps, aligns them according to a specified scheme, and computes the absolute trajectory error (ATE) and the normalized estimation error square (NEES). The NEES is based on the uncertainty of the estimated trajectory and the ATE. 
+The results can be plotted and will be saved as [EvaluationReport](./cnspy_trajectory_evaluation/EvaluationReport.py).
 
-The CSV-file of the estimated trajectory must contain the pose uncertainty (`CSVFormatPose.PoseWithCov`). For the file format please refer to the [spatial_csv_formats]() package and the `CSVFormatPose.py` file. 
+The CSV-file of the estimated trajectory must contain the pose uncertainty (`CSVFormatPose.PoseWithCov`). For the file format please refer to the [cnspy_spatial_csv_formats](https://github.com/aau-cns/cnspy_spatial_csv_formats) package and the `CSVFormatPose.py` file. 
 
 ## Installation
 
 Install the current code base from GitHub and pip install a link to that cloned copy
 ```
-git clone https://gitlab.aau.at/aau-cns/py3_pkgs/cnspy_trajectory_evaluation.git
+git clone https://github.com/aau-cns/cnspy_trajectory_evaluation.git
 cd cnspy_trajectory_evaluation
 pip install -e .
 ```
@@ -17,14 +17,16 @@ pip install -e .
 
 ## Dependencies
 
+It is part of the [cnspy eco-system](hhttps://github.com/aau-cns/cnspy_eco_system_test) of the [cns-github](https://github.com/aau-cns) group.  
+Main dependencies are:
 * [numpy]()
 * [matplotlib]()
 * [pandas]()
 * [scipy]()
-* [timestamp_association]()
-* [trajectory]()
-* [csv2dataframe]()
-* [ros_csv_formats]()
+* [cnspy_timestamp_association](https://github.com/aau-cns/cnspy_timestamp_association)
+* [cnspy_csv2dataframe](https://github.com/aau-cns/cnspy_csv2dataframe)
+* [cnspy_spatial_csv_formats](https://github.com/aau-cns/cnspy_spatial_csv_formats)
+* [cnspy_trajectory](https://github.com/aau-cns/cnspy_trajectory)  
 
 ## Definitions and Metrics
 
@@ -40,7 +42,7 @@ The rotational error is defined as `R_G_B_err = R_G_B_true^T * R_G_B_est`, leadi
 
 ## Examples
 
-Please refer to the unit-test section in `TrajectoryEvaluation.py`.
+Please refer to the unit-test sections in the directory `test`.
 
 ### position error plot
 
@@ -59,7 +61,7 @@ Please refer to the unit-test section in `TrajectoryEvaluation.py`.
 The classes `AbsoluteTrajectoryError` and `SpatialAlignment` of the  package `trajectory_evaluation` are based on the preliminary work of the  [Robotics and Perception Group, ETH Zurich](http://rpg.ifi.uzh.ch/index.html).
 
 
-1) From ETH Zurich: [rpg_trajectory_evaluation](https://github.com/uzh-rpg/rpg_trajectory_evaluation) released by Zichao Zhang, Davide Scaramuzza: A Tutorial on Quantitative Trajectory Evaluation for Visual(-Inertial) Odometry, IEEE/RSJ Int. Conf. Intell. Robot. Syst. (IROS), 2018.
+1) From ETH Zurich: [rpg_trajectory_evaluation](https://github.com/uzh-rpg/rpg_trajectory_evaluation) released by Zichao Zhang and Davide Scaramuzza with [1]. 
 
 ## References
 

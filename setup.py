@@ -21,9 +21,9 @@ setup(
     description='Evaluation of trajectories.',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url='https://gitlab.aau.at/aau-cns/py3_pkgs/cnspy_trajectory_evaluation/',
+    url='https://github.com/aau-cns/cnspy_trajectory_evaluation/',
     project_urls={
-        "Bug Tracker": "https://gitlab.aau.at/aau-cns/py3_pkgs/cnspy_trajectory_evaluation/issues",
+        "Bug Tracker": "https://github.com/aau-cns/cnspy_trajectory_evaluation/issues",
     },    
     classifiers=[
         'Development Status :: 4 - Beta',
