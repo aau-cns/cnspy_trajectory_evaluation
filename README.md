@@ -17,7 +17,7 @@ pip install -e .
 
 ## Dependencies
 
-It is part of the [cnspy eco-system](hhttps://github.com/aau-cns/cnspy_eco_system_test) of the [cns-github](https://github.com/aau-cns) group.  
+It is part of the [cnspy eco-system](https://github.com/aau-cns/cnspy_eco_system_test) of the [cns-github](https://github.com/aau-cns) group.  
 Main dependencies are:
 * [numpy]()
 * [matplotlib]()
@@ -46,15 +46,15 @@ Please refer to the unit-test sections in the directory `test`.
 
 ### position error plot
 
-![p_ARMSE](./doc/p_ARMSE.png "folder structure")
+![p_ARMSE](./doc/p_ARMSE.png "p_ARMSE")
 
 ### Pose error plot
 
-![pose-err-plot](./doc/pose-err-plot.png "folder structure")
+![pose-err-plot](./doc/pose-err-plot.png "pose-err-plot")
 
 ### Pose NEES plot
 
-![pose-nees](./doc/pose-nees.png "folder structure")
+![pose-nees](./doc/pose-nees.png "pose-nees")
 
 ## Credits
 
