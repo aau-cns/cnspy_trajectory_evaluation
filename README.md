@@ -13,7 +13,10 @@ git clone https://github.com/aau-cns/cnspy_trajectory_evaluation.git
 cd cnspy_trajectory_evaluation
 pip install -e .
 ```
-
+or the [official package](https://pypi.org/project/cnspy-trajectory-evaluation/) via
+```commandline
+pip install cnspy-trajectory-evaluation
+```
 
 ## Dependencies
 
