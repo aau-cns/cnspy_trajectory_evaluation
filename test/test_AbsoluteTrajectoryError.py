@@ -61,27 +61,40 @@ class AbsoluteTrajectoryError_Test(unittest.TestCase):
                           angles=True)
 
         q_vec2 = np.zeros((4, 6), dtype=float)
-        q_vec2[:, 0] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([11, 20, 45], unit='deg', order='xyz'))
-        q_vec2[:, 1] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([12, 25, 45], unit='deg', order='xyz'))
-        q_vec2[:, 2] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([13, 30, 45], unit='deg', order='xyz'))
-        q_vec2[:, 3] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 37, 45], unit='deg', order='xyz'))
-        q_vec2[:, 4] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 42, 45], unit='deg', order='xyz'))
-        q_vec2[:, 5] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 45, 45], unit='deg', order='xyz'))
+        q_vec2[:, 0] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10+90, 20, 45], unit='deg', order='xyz'))
+        q_vec2[:, 1] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10-90, 25, 45], unit='deg', order='xyz'))
+        q_vec2[:, 2] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 30, 45], unit='deg', order='xyz'))
+        q_vec2[:, 3] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 35+90, 45], unit='deg', order='xyz'))
+        q_vec2[:, 4] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 40-90, 45], unit='deg', order='xyz'))
+        q_vec2[:, 5] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 45, 45+90], unit='deg', order='xyz'))
         q_vec2 = q_vec2.T
 
         #q_vec2 = np.copy(q_vec)
         p_vec2 = np.copy(p_vec)
         p_vec2[:, 0] = p_vec2[:, 0] * 1.5
         traj2 = Trajectory(t_vec=t_vec, q_vec=q_vec2, p_vec=p_vec2)
-        ATE2 = AbsoluteTrajectoryError(traj_gt=traj1, traj_est=traj2)
-        ATE2.plot_pose_err(cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
-                          angles=True)
+        ATE2_global = AbsoluteTrajectoryError(traj_gt=traj1, traj_est=traj2,
+                                              err_type=AbsoluteTrajectoryErrorType.global_pose)
+        ATE2_global.plot_pose_err(cfg=TrajectoryPlotConfig(show=True, radians=False,
+                                                           plot_type=TrajectoryPlotTypes.plot_2D_over_t), angles=True)
+        print('ATE2_global done:ARMSE p={:.2f}, q={:.2f}'.format(ATE2_global.ARMSE_p, ATE2_global.ARMSE_q_deg))
 
+        ATE2_local = AbsoluteTrajectoryError(traj_gt=traj1, traj_est=traj2,
+                                             err_type=AbsoluteTrajectoryErrorType.local_pose)
+        ATE2_local.plot_pose_err(cfg=TrajectoryPlotConfig(show=True, radians=False,
+                                                          plot_type=TrajectoryPlotTypes.plot_2D_over_t), angles=True)
+        print('ATE2_local done:ARMSE p={:.2f}, q={:.2f}'.format(ATE2_local.ARMSE_p, ATE2_local.ARMSE_q_deg))
 
-    def test_ATE(self):
+        ATE2_loc_glob = AbsoluteTrajectoryError(traj_gt=traj1, traj_est=traj2,
+                                                err_type=AbsoluteTrajectoryErrorType.global_p_local_q)
+        ATE2_loc_glob.plot_pose_err(cfg=TrajectoryPlotConfig(show=True, radians=False,
+                                                             plot_type=TrajectoryPlotTypes.plot_2D_over_t), angles=True)
+        print('ATE2_loc_glob done:ARMSE p={:.2f}, q={:.2f}'.format(ATE2_loc_glob.ARMSE_p, ATE2_loc_glob.ARMSE_q_deg))
+
+    def test_ATE1_loc_global(self):
         traj_est, traj_gt = self.get_trajectories()
 
-        ATE = AbsoluteTrajectoryError(traj_est, traj_gt)
+        ATE = AbsoluteTrajectoryError(traj_est, traj_gt,err_type=AbsoluteTrajectoryErrorType.global_p_local_q)
         ATE.plot_p_err()
         ATE.plot_p_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist))
         ATE.plot_rpy_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist))
@@ -91,7 +104,39 @@ class AbsoluteTrajectoryError_Test(unittest.TestCase):
         ATE.plot_pose_err(
             cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist),
             angles=True)
-        print('ATE1 done')
+        print('test_ATE1_loc_global done:ARMSE p={:.2f}, q={:.2f}'.format(ATE.ARMSE_p, ATE.ARMSE_q_deg))
+
+    def test_ATE1_local_pose(self):
+        traj_est, traj_gt = self.get_trajectories()
+
+        ATE = AbsoluteTrajectoryError(traj_est, traj_gt,err_type=AbsoluteTrajectoryErrorType.local_pose)
+        ATE.plot_p_err()
+        ATE.plot_p_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist))
+        ATE.plot_rpy_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist))
+        print('ATE1 local pose done')
+        ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist),
+                          angles=True)
+        ATE.plot_pose_err(
+            cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist),
+            angles=True)
+
+        print('test_ATE1_local_pose done:ARMSE p={:.2f}, q={:.2f}'.format(ATE.ARMSE_p, ATE.ARMSE_q_deg))
+
+    def test_ATE1_global_pose(self):
+        traj_est, traj_gt = self.get_trajectories()
+
+        ATE = AbsoluteTrajectoryError(traj_est, traj_gt,err_type=AbsoluteTrajectoryErrorType.global_pose)
+        ATE.plot_p_err()
+        ATE.plot_p_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist))
+        ATE.plot_rpy_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist))
+        print('ATE1 global pose done')
+        ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist),
+                          angles=True)
+        ATE.plot_pose_err(
+            cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_dist),
+            angles=True)
+
+        print('test_ATE1_global_pose done:ARMSE p={:.2f}, q={:.2f}'.format(ATE.ARMSE_p, ATE.ARMSE_q_deg))
 
     def test_ATE2(self):
         traj_est, traj_gt = self.get_trajectories()
@@ -106,7 +151,7 @@ class AbsoluteTrajectoryError_Test(unittest.TestCase):
         ATE.plot_pose_err(
             cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
             angles=True)
-        print('ATE2 done:ARMSE p={:.2f}, q={:.2f}'.format(ATE.ARMSE_p, ATE.ARMSE_q_deg))
+        print('test_ATE2 done:ARMSE p={:.2f}, q={:.2f}'.format(ATE.ARMSE_p, ATE.ARMSE_q_deg))
 
 
 if __name__ == "__main__":
