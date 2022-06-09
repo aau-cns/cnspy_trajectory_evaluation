@@ -22,7 +22,7 @@
 import os
 from sys import version_info
 from cnspy_csv2dataframe.CSV2DataFrame import CSV2DataFrame
-from cnspy_spatial_csv_formats.CSVFormatPose import CSVFormatPose
+from cnspy_spatial_csv_formats.CSVSpatialFormatType import CSVSpatialFormatType
 from cnspy_timestamp_association.TimestampAssociation import TimestampAssociation
 from cnspy_trajectory.Trajectory import Trajectory
 from cnspy_trajectory.TrajectoryEstimated import TrajectoryEstimated
@@ -84,7 +84,7 @@ class AssociatedTrajectories:
 
     def get_trajectories(self):
         # returns Tr_est_matched, Tr_gt_matched
-        if self.csv_df_est.format == CSVFormatPose.PosOrientWithCov:
+        if self.csv_df_est.format == CSVSpatialFormatType.PosOrientWithCov:
             return TrajectoryEstimated(df=self.data_frame_est_matched), Trajectory(df=self.data_frame_gt_matched)
         else:
             return Trajectory(df=self.data_frame_est_matched), Trajectory(df=self.data_frame_gt_matched)
