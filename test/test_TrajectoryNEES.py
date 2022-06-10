@@ -21,6 +21,7 @@ import os
 import unittest
 import time
 from cnspy_trajectory_evaluation.AbsoluteTrajectoryError import AbsoluteTrajectoryError
+from cnspy_trajectory_evaluation.AbsoluteTrajectoryErrorType import AbsoluteTrajectoryErrorType
 from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
 from cnspy_trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
 from cnspy_trajectory_evaluation.TrajectoryNEES import *
@@ -38,7 +39,7 @@ class TrajectoryNEES_Test(unittest.TestCase):
 
     def get_trajectories(self):
         traj_est = TrajectoryEstimated()
-        self.assertTrue(traj_est.load_from_CSV(str(SAMPLE_DATA_DIR + '/ID1-pose-est-cov.csv')))
+        self.assertTrue(traj_est.load_from_CSV(str(SAMPLE_DATA_DIR + '/ID1-pose-est-posorient-cov.csv')))
         traj_gt = Trajectory()
         self.assertTrue(traj_gt.load_from_CSV(str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')))
         return traj_est, traj_gt
@@ -46,7 +47,7 @@ class TrajectoryNEES_Test(unittest.TestCase):
     def test_nees(self):
         self.start()
         traj_est, traj_gt = self.get_trajectories()
-        ATE = AbsoluteTrajectoryError(traj_est, traj_gt)
+        ATE = AbsoluteTrajectoryError(traj_est, traj_gt, err_type=AbsoluteTrajectoryErrorType.local_pose)
         print('ARMSE p={:.2f}, q={:.2f}'.format(ATE.ARMSE_p, ATE.ARMSE_q_deg))
         self.stop('Loading + ATE')
         self.start()

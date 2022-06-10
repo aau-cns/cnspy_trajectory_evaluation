@@ -35,7 +35,7 @@ class EvaluationReport_Test(unittest.TestCase):
 
     def get_fn(self):
         fn_gt_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')
-        fn_est_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-est-cov.csv')
+        fn_est_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-est-posorient-cov.csv')
         return fn_gt_csv, fn_est_csv
 
     def test_init(self):
@@ -43,7 +43,7 @@ class EvaluationReport_Test(unittest.TestCase):
         report = EvaluationReport()
         report.directory = ''
         report.fn_gt = str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')
-        report.fn_est = str(SAMPLE_DATA_DIR + '/ID1-pose-est-cov.csv')
+        report.fn_est = str(SAMPLE_DATA_DIR + '/ID1-pose-est-posorient-cov.csv')
         report.ANEES_p = 0.1
         report.ANEES_q = 0.2
         report.ARMSE_p = 0.3

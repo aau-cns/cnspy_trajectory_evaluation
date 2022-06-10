@@ -35,13 +35,13 @@ class TrajectoryEvaluation_Test(unittest.TestCase):
 
     def get_fn(self):
         fn_gt_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')
-        fn_est_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-est-cov.csv')
+        fn_est_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-est-posorient-cov.csv')
         return fn_gt_csv, fn_est_csv
 
     def test_init(self):
         self.start()
         fn_gt_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')
-        fn_est_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-est-cov.csv')
+        fn_est_csv = str(SAMPLE_DATA_DIR + '/ID1-pose-est-posorient-cov.csv')
         eval = TrajectoryEvaluation(fn_gt_csv, fn_est_csv, result_dir=str(SAMPLE_DATA_DIR + '/results/eval'), prefix='eval-ID1-',
                                     alignment_type=TrajectoryAlignmentTypes.none)
 
