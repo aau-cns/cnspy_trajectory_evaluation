@@ -47,7 +47,7 @@ class TrajectoryNEES:
 
         self.t_vec = traj_est.t_vec
         self.NEES_p_vec = TrajectoryNEES.toNEES_arr(False, traj_est.Sigma_p_vec, traj_err.p_vec)
-        self.NEES_q_vec = TrajectoryNEES.toNEES_arr(True, traj_est.Sigma_q_vec, traj_err.q_vec)
+        self.NEES_q_vec = TrajectoryNEES.toNEES_arr(True, traj_est.Sigma_R_vec, traj_err.q_vec)
 
         self.ANEES_p = np.mean(self.NEES_p_vec)
         self.ANEES_q = np.mean(self.NEES_q_vec)
