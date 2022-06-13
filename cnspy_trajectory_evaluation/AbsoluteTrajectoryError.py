@@ -30,17 +30,19 @@
 import matplotlib.pyplot as plt
 
 from cnspy_numpy_utils.accumulated_distance import *
+from cnspy_spatial_csv_formats.EstimationErrorType import EstimationErrorType
 from cnspy_trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
-from cnspy_trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
 from cnspy_trajectory.Trajectory import Trajectory
+from cnspy_trajectory.TrajectoryError import TrajectoryError
 from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
 from cnspy_trajectory.SpatialConverter import SpatialConverter
 from cnspy_trajectory.TrajectoryEstimated import TrajectoryEstimated
-from cnspy_trajectory_evaluation.AbsoluteTrajectoryErrorType import AbsoluteTrajectoryErrorType
+from cnspy_trajectory.TrajectoryErrorType import TrajectoryErrorType
 
 # TODOs
 # - TODO: ARMSE_p should result in the same error using different ATE types!
-
+# - TODO: AbsoluteTrajectoryError should hold only traj_err object and ARMSE statistics
+# - TODO: move plot logic into TrajectoryError class
 
 class AbsoluteTrajectoryError:
     err_p_vec = None  # position error vector defined via "error_type" [m]
@@ -52,40 +54,40 @@ class AbsoluteTrajectoryError:
     rmse_q_deg_vec = None  # rotation error angle [deg]
     t_vec = None
 
-    traj_err = None
-    traj_est = None
-    traj_gt = None
+    traj_err = None  # TrajectoryError
+    traj_est = None  # Trajectory/TrajectoryEstimated
+    traj_gt = None   # Trajectory
     ARMSE_p = None      # [m]
     ARMSE_q_deg = None  # [deg]
-    error_type = None
+    error_type = None   # TrajectoryErrorType
 
-    def __init__(self, traj_est, traj_gt, err_type=AbsoluteTrajectoryErrorType.global_pose):
+    def __init__(self, traj_est, traj_gt, traj_err_type=TrajectoryErrorType()):
         assert (isinstance(traj_est, Trajectory))
         assert (isinstance(traj_gt, Trajectory))
 
         assert traj_est.num_elems() == traj_gt.num_elems(), "Traj. have to be matched in time and aligned first"
 
-        self.error_type = err_type
-        if err_type == AbsoluteTrajectoryErrorType.global_p_local_q:
+        self.error_type = traj_err_type
+        if traj_err_type.is_global_p_local_q():
             e_p_vec, e_p_rmse_vec, e_q_vec, e_rpy_vec, e_q_rmse_deg_vec, e_scale = \
                 AbsoluteTrajectoryError.compute_absolute_global_p_local_q_error(p_est=traj_est.p_vec,
                                                                                 q_est=traj_est.q_vec,
                                                                                 p_gt=traj_gt.p_vec,
                                                                                 q_gt=traj_gt.q_vec)
-        elif err_type == AbsoluteTrajectoryErrorType.global_pose:
+        elif traj_err_type.is_global_pose():
             e_p_vec, e_p_rmse_vec, e_q_vec, e_rpy_vec, e_q_rmse_deg_vec, e_scale = \
                 AbsoluteTrajectoryError.compute_absolute_global_pose_error(p_est=traj_est.p_vec,
                                                                            q_est=traj_est.q_vec,
                                                                            p_gt=traj_gt.p_vec,
                                                                            q_gt=traj_gt.q_vec)
-        elif err_type == AbsoluteTrajectoryErrorType.local_pose:
+        elif traj_err_type.is_local_pose():
             e_p_vec, e_p_rmse_vec, e_q_vec, e_rpy_vec, e_q_rmse_deg_vec, e_scale = \
                 AbsoluteTrajectoryError.compute_absolute_local_pose_error(p_est=traj_est.p_vec,
                                                                           q_est=traj_est.q_vec,
                                                                           p_gt=traj_gt.p_vec,
                                                                           q_gt=traj_gt.q_vec)
         else:
-            print("Error type not supported!")
+            print("Error type not supported! " + traj_err_type)
             e_p_vec = []
             e_p_rmse_vec = []
             e_q_vec = []
@@ -100,7 +102,8 @@ class AbsoluteTrajectoryError:
         tmp, self.rmse_q_deg_vec = AbsoluteTrajectoryError.compute_rmse_q(e_q_vec)
         self.t_vec = traj_est.t_vec - traj_est.t_vec[0]
 
-        self.traj_err = Trajectory(t_vec=self.t_vec, p_vec=self.err_p_vec, q_vec=self.err_q_vec)
+        self.traj_err = TrajectoryError(t_vec=self.t_vec, p_vec=self.err_p_vec, q_vec=self.err_q_vec,
+                                        traj_err_type=traj_err_type)
         self.traj_est = traj_est
         self.traj_gt = traj_gt
         self.ARMSE_p = np.mean(self.rmse_p_vec)
@@ -115,8 +118,8 @@ class AbsoluteTrajectoryError:
                                                TrajectoryPlotter(traj_obj=self.traj_err, config=cfg), cfg=cfg,
                                                angles=angles,
                                                plotter_gt=TrajectoryPlotter(traj_obj=self.traj_gt, config=cfg),
-                                               local_p_err=self.error_type.is_local_p(),
-                                               local_R_err=self.error_type.is_local_R())
+                                               local_p_err=self.error_type.is_local_position_error(),
+                                               local_R_err=self.error_type.is_local_rotation_error())
 
     def plot_p_err(self, cfg=TrajectoryPlotConfig(), fig=None, ax=None):
         plotter = TrajectoryPlotter(traj_obj=self.traj_err, config=cfg)
