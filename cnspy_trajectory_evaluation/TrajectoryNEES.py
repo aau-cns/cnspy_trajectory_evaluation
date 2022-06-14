@@ -23,8 +23,13 @@
 import numpy as np
 import pandas as pandas
 from spatialmath import base
+
+from cnspy_spatial_csv_formats.ErrorRepresentationType import ErrorRepresentationType
+from cnspy_spatial_csv_formats.EstimationErrorType import EstimationErrorType
 from cnspy_trajectory.SpatialConverter import SpatialConverter
 from cnspy_trajectory.Trajectory import Trajectory
+from cnspy_trajectory.TrajectoryEstimationError import TrajectoryEstimationError
+from cnspy_trajectory.TrajectoryPlotUtils import TrajectoryPlotUtils
 from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
 from cnspy_trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
 from cnspy_trajectory.TrajectoryEstimated import TrajectoryEstimated
@@ -37,20 +42,30 @@ import matplotlib.pyplot as plt
 class TrajectoryNEES:
     NEES_p_vec = None
     NEES_q_vec = None
+    NEES_T_vec = None
     ANEES_p = None
     ANEES_q = None
+    ANEES_T = None
     t_vec = None
 
     def __init__(self, traj_est, traj_err):
         assert (isinstance(traj_est, TrajectoryEstimated))
-        assert (isinstance(traj_err, Trajectory))
+        assert (isinstance(traj_err, TrajectoryEstimationError))
+
+        assert traj_est.format.rotation_error_representation == traj_err.err_rep_type
+        assert traj_est.format.estimation_error_type == traj_err.est_err_type
+
 
         self.t_vec = traj_est.t_vec
-        self.NEES_p_vec = TrajectoryNEES.toNEES_arr(False, traj_est.Sigma_p_vec, traj_err.p_vec)
-        self.NEES_q_vec = TrajectoryNEES.toNEES_arr(True, traj_est.Sigma_R_vec, traj_err.q_vec)
-
-        self.ANEES_p = np.mean(self.NEES_p_vec)
-        self.ANEES_q = np.mean(self.NEES_q_vec)
+        if traj_err.err_rep_type == ErrorRepresentationType.se3_tau:
+            T_err_vec = np.hstack((traj_err.p_vec, traj_err.theta_q_vec))
+            self.NEES_T_vec = TrajectoryNEES.toNEES_arr(traj_est.Sigma_T_vec, T_err_vec)
+            self.ANEES_T = np.mean(self.NEES_T_vec)
+        else:
+            self.NEES_p_vec = TrajectoryNEES.toNEES_arr(traj_est.Sigma_p_vec, traj_err.p_vec)
+            self.NEES_q_vec = TrajectoryNEES.toNEES_arr(traj_est.Sigma_R_vec, traj_err.theta_q_vec)
+            self.ANEES_p = np.mean(self.NEES_p_vec)
+            self.ANEES_q = np.mean(self.NEES_q_vec)
 
     def plot(self, fig=None, cfg=None):
         if cfg is None:
@@ -81,15 +96,15 @@ class TrajectoryNEES:
         assert (p_cols == 1)
         assert (q_cols == 1)
         data_frame = pandas.DataFrame({'t': self.t_vec[:, 0],
-                                       'nees_xyz': self.NEES_p_vec[:, 0],
-                                       'nees_rpy': self.NEES_q_vec[:, 0]})
+                                       'nees_p': self.NEES_p_vec[:, 0],
+                                       'nees_q': self.NEES_q_vec[:, 0]})
         data_frame.to_csv(filename, sep=',', index=False,
-                          header=['#t', 'nees_xyz', 'nees_rpy'],
-                          columns=['t', 'nees_xyz', 'nees_rpy'])
+                          header=['#t', 'nees_p', 'nees_rpy'],
+                          columns=['t', 'nees_q', 'nees_rpy'])
 
     # https://de.mathworks.com/help/fusion/ref/trackerrormetrics-system-object.html
     @staticmethod
-    def toNEES_arr(is_angle, P_arr, err_arr):
+    def toNEES_arr(P_arr, err_arr):
         # if is_angle:
         #    err_arr = tf.euler_from_quaternion(err_arr, 'rzyx')
 
@@ -97,7 +112,7 @@ class TrajectoryNEES:
         nees_arr = np.zeros((l, 1))
         for i in range(0, l):
             try:
-                nees_arr[i] = TrajectoryNEES.toNEES(is_angle=is_angle, P=P_arr[i], err=err_arr[i])
+                nees_arr[i] = TrajectoryNEES.toNEES(P=P_arr[i], err=err_arr[i])
             except np.linalg.LinAlgError:
                 print("TrajectoryNEES.toNEES(): covariance causes np.linalg.LinAlgError! ")
                 print(P_arr[i])
@@ -105,45 +120,13 @@ class TrajectoryNEES:
         return nees_arr
 
     @staticmethod
-    def quat2theta(q_err):
-        """
-        converts a rotation represented by a quaternion in its small angle approximation
-
-        > S = R * Exp(theta)
-        > R(q_err) = R^T * S
-        > theta = Log(R(q_err))
-
-        refer to:
-        * "Quaternion kinematics for the error-state Kalman filter" by Joan Sola,
-            https://arxiv.org/pdf/1711.02508.pdf, chapter 4: Perturbations, derivatives and integrals
-
-        For really small perturbations the following should be a sufficient approximation:
-        > R(q) = I + skew(theta)   // Sola EQ. 193
-        > theta = unskew(R(q) - I)
-
-
-        """
-        R_ = SpatialConverter.HTMQ_quaternion_to_SO3(q_err)
-
-        # alternatives:
-        # - theta_1 = base.vex(R_.R - np.eye(3))
-        # - theta_2 = 2 * (q_err[:3] / q_err[3])
-        theta = base.trlog(R_.R, twist=True)
-
-        return theta
-
-    @staticmethod
-    def toNEES(is_angle, P, err):
+    def toNEES(P, err):
         """
         computes the Normalized Estimation Error Square (Mahalanobis Distance Squared)
-        In case of rotations (is_angle == True), the rotation is expected to be a
-        small angle approximation (refer to quat2theta). This means the corresponding covariance matrix (P) must be
-        representing the uncertainty of theta!
-
-
+        The corresponding covariance matrix (P) must be in the same space and unit as the error!
+        E.g., for local/body rotations the uncertainty and e.g. the error
+        (err = theta_so3  with R_err = expm(theta_so3)) must be in the same space and unit
         """
-        if is_angle:
-            err = TrajectoryNEES.quat2theta(err)
 
         tr = np.trace(P)
         eig_vals, eig_vec = np.linalg.eig(P)
@@ -167,7 +150,7 @@ class TrajectoryNEES:
     @staticmethod
     def ax_plot_nees(ax, dim, conf_ival, NEES_vec, x_linespace=None, color='r', ls=PlotLineStyle()):
         l = NEES_vec.shape[0]
-        ANEES = np.mean(NEES_vec)
+        avg_NEES = np.mean(NEES_vec)
 
         x_label = 'rel. t [sec]'
         if x_linespace is None:
@@ -175,20 +158,26 @@ class TrajectoryNEES:
             x_label = ''
 
         conf_ival = float(conf_ival)
-        TrajectoryPlotter.ax_plot_n_dim(ax, x_linespace=x_linespace, values=NEES_vec,
-                                        colors=[color], labels=['ANEES={:.3f}'.format(ANEES)], ls=ls)
+        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=NEES_vec,
+                                        colors=[color], labels=['avg. NEES={:.3f}'.format(avg_NEES)], ls=ls)
 
         interval = TrajectoryNEES.chi_square_confidence_bounds(confidence_interval=conf_ival,
                                                                degrees_of_freedom=dim)
         y_values = np.ones((l, 1))
-        TrajectoryPlotter.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * interval[1],
+        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * interval[1],
                                         colors=['k'],
                                         labels=['p={:.3f}->{:.3f}'.format(conf_ival, interval[1])],
-                                        ls=PlotLineStyle(linewidth=0.5, linestyle='--'))
+                                        ls=PlotLineStyle(linewidth=0.5, linestyle='-.'))
 
-        TrajectoryPlotter.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * interval[0],
+        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * interval[0],
                                         colors=['k'],
                                         labels=['p={:.3f}->{:.3f}'.format(1.0 - conf_ival, interval[0])],
+                                        ls=PlotLineStyle(linewidth=0.5, linestyle='-.'))
+
+        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * dim,
+                                        colors=['k'],
+                                        labels=['mean={:.1f}'.format(dim)],
                                         ls=PlotLineStyle(linewidth=0.5, linestyle='--'))
+
         ax.set_xlabel(x_label)
         pass

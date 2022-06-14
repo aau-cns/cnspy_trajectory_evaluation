@@ -21,10 +21,14 @@ import os
 import unittest
 import time
 from cnspy_trajectory_evaluation.AbsoluteTrajectoryError import AbsoluteTrajectoryError
-from cnspy_trajectory_evaluation.AbsoluteTrajectoryErrorType import AbsoluteTrajectoryErrorType
-from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig
+from cnspy_trajectory.TrajectoryErrorType import TrajectoryErrorType
 from cnspy_trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
+from cnspy_trajectory_evaluation.EstimationTrajectoryError import EstimationTrajectoryError
 from cnspy_trajectory_evaluation.TrajectoryNEES import *
+from cnspy_spatial_csv_formats.CSVSpatialFormat import CSVSpatialFormat
+from cnspy_spatial_csv_formats.CSVSpatialFormatType import CSVSpatialFormatType
+from cnspy_spatial_csv_formats.ErrorRepresentationType import ErrorRepresentationType
+from cnspy_spatial_csv_formats.EstimationErrorType import EstimationErrorType
 
 SAMPLE_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sample_data')
 
@@ -40,6 +44,9 @@ class TrajectoryNEES_Test(unittest.TestCase):
     def get_trajectories(self):
         traj_est = TrajectoryEstimated()
         self.assertTrue(traj_est.load_from_CSV(str(SAMPLE_DATA_DIR + '/ID1-pose-est-posorient-cov.csv')))
+        traj_est.format = CSVSpatialFormat(fmt_type=CSVSpatialFormatType.PosOrientWithCov,
+                                           est_err_type=EstimationErrorType.type5,
+                                           err_rep_type=ErrorRepresentationType.R_small_theta)
         traj_gt = Trajectory()
         self.assertTrue(traj_gt.load_from_CSV(str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')))
         return traj_est, traj_gt
@@ -47,20 +54,25 @@ class TrajectoryNEES_Test(unittest.TestCase):
     def test_nees(self):
         self.start()
         traj_est, traj_gt = self.get_trajectories()
-        ATE = AbsoluteTrajectoryError(traj_est, traj_gt, err_type=AbsoluteTrajectoryErrorType.local_pose)
-        print('ARMSE p={:.2f}, q={:.2f}'.format(ATE.ARMSE_p, ATE.ARMSE_q_deg))
+        ATE = AbsoluteTrajectoryError(traj_est, traj_gt, traj_err_type=TrajectoryErrorType.local_pose())
+        ETE = EstimationTrajectoryError(traj_est, traj_gt)
+
+        ARMSE_p, ARMSE_q_deg = ATE.traj_err.get_ARMSE()
+        print('ARMSE p={:.2f} [m], q={:.2f} [deg]'.format(ARMSE_p, ARMSE_q_deg))
         self.stop('Loading + ATE')
+
+        # TODO:
+        cfg = TrajectoryPlotConfig(show=True, close_figure=False,  radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t)
+        TrajectoryPlotter.plot_pose_err_cov(traj_est=traj_est, traj_err=ATE.traj_err, traj_gt=traj_gt, cfg=cfg)
+
         self.start()
-        NEES = TrajectoryNEES(ATE.traj_est, ATE.traj_err)
+        NEES = TrajectoryNEES(traj_est, ETE.traj_est_err)
         self.stop('NEES computation')
         print('ANEES_p: ' + str(NEES.ANEES_p))
         print('ANEES_q: ' + str(NEES.ANEES_q))
 
         NEES.plot(cfg=TrajectoryPlotConfig(show=True, save_fn=str(SAMPLE_DATA_DIR + '/../../doc/pose-nees.png')))
         NEES.save_to_CSV(str(SAMPLE_DATA_DIR + '/results/nees.csv'))
-        ATE.plot_pose_err(
-            cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t, save_fn=str(SAMPLE_DATA_DIR + '/../../doc/pose-err-plot.png')),
-            angles=True)
 
 
 if __name__ == "__main__":

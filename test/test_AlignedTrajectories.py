@@ -55,7 +55,7 @@ class AlignedTrajectories_Test(unittest.TestCase):
         plot_est = TrajectoryPlotter(traj_obj=traj_est_matched)
         plot_est_aligned = TrajectoryPlotter(traj_obj=aligned.traj_est_matched_aligned)
 
-        TrajectoryPlotter.multi_plot_3D(traj_plotter_list=[plot_gt, plot_est, plot_est_aligned],
+        TrajectoryPlotter.multi_plot_3D(traj_list=[plot_gt, plot_est, plot_est_aligned],
                                         cfg=TrajectoryPlotConfig(),
                                         name_list=['gt_matched', 'est_matched', 'est_matched_aligned'])
 
