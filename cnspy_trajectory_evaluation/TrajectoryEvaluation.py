@@ -57,8 +57,8 @@ class TrajectoryEvaluation:
         ATE.traj_err.save_to_CSV(result_dir + '/' + prefix + 'err_matched_aligned.csv')
 
         NEES = TrajectoryNEES(traj_est=aligned.traj_est_matched_aligned, traj_err=ATE.traj_err)
-        self.report.ANEES_p = NEES.ANEES_p
-        self.report.ANEES_q = NEES.ANEES_q
+        self.report.ANEES_p = NEES.avg_NEES_p
+        self.report.ANEES_q = NEES.avg_NEES_q
         NEES.save_to_CSV(result_dir + '/' + prefix + 'nees_matched_aligned.csv')
 
         self.report.save(result_dir + '/' + prefix + 'report.ini')
@@ -75,14 +75,12 @@ class TrajectoryEvaluation:
                 show = False
 
             est_matched, gt_matched = assoc.get_trajectories()
-            plot_gt = TrajectoryPlotter(traj_obj=gt_matched)
-            plot_est = TrajectoryPlotter(traj_obj=est_matched)
-            plot_est_aligned = TrajectoryPlotter(traj_obj=aligned.traj_est_matched_aligned)
 
-            TrajectoryPlotter.multi_plot_3D(traj_list=[plot_gt, plot_est, plot_est_aligned],
+            TrajectoryPlotter.multi_plot_3D(traj_list=[gt_matched, est_matched, aligned.traj_est_matched_aligned],
                                             cfg=TrajectoryPlotConfig(show=show, close_figure=True, save_fn=fn_Multi),
                                             name_list=['gt_matched', 'est_matched', 'est_matched_aligned'])
-            ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=show, close_figure=True, radians=False,
+            TrajectoryPlotter.plot_pose_err_cov(traj_gt=gt_matched, traj_est=est_matched, traj_err=ATE.traj_err,
+                                                cfg=TrajectoryPlotConfig(show=show, close_figure=True, radians=False,
                                                        plot_type=TrajectoryPlotTypes.plot_2D_over_t,
                                                        save_fn=fn_ATE), angles=True)
 

@@ -68,8 +68,8 @@ class TrajectoryNEES_Test(unittest.TestCase):
         self.start()
         NEES = TrajectoryNEES(traj_est, ETE.traj_est_err)
         self.stop('NEES computation')
-        print('ANEES_p: ' + str(NEES.ANEES_p))
-        print('ANEES_q: ' + str(NEES.ANEES_q))
+        print('avg_NEES_p: ' + str(NEES.avg_NEES_p))
+        print('avg_NEES_q: ' + str(NEES.avg_NEES_q))
 
         NEES.plot(cfg=TrajectoryPlotConfig(show=True, save_fn=str(SAMPLE_DATA_DIR + '/../../doc/pose-nees.png')))
         NEES.save_to_CSV(str(SAMPLE_DATA_DIR + '/results/nees.csv'))

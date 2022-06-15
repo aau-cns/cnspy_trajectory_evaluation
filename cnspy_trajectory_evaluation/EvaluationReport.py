@@ -21,16 +21,18 @@
 ########################################################################################################################
 import configparser
 
+# TODO: to compute the ANEES of multiple runs, the NEES-vectors and timestamps need to be stored! As they need to be associated later again.
+# TODO: the EvaluationReport does not reflect a real ANEES, only the average NEES over a single run!
 
 class EvaluationReport:
     def __init__(self, directory='', fn_gt='', fn_est='', alignment='none',
-                 num_aligned_samples=0, ANEES_p=0.0, ANEES_q=0.0, RMSE_p=0.0, RMSE_q=0.0):
+                 num_aligned_samples=0, avg_NEES_p=0.0, ANEES_q=0.0, RMSE_p=0.0, RMSE_q=0.0):
         self.directory = directory
         self.fn_gt = fn_gt
         self.fn_est = fn_est
         self.alignment = str(alignment)
         self.num_aligned_samples = int(num_aligned_samples)
-        self.ANEES_p = ANEES_p
+        self.ANEES_p = avg_NEES_p
         self.ANEES_q = ANEES_q
         self.ARMSE_p = RMSE_p
         self.ARMSE_q = RMSE_q
@@ -42,8 +44,8 @@ class EvaluationReport:
                                       'fn_est': self.fn_est,
                                       'alignment': self.alignment,
                                       'num_aligned_samples': self.num_aligned_samples,
-                                      'ANEES_p': self.ANEES_p,
-                                      'ANEES_q': self.ANEES_q,
+                                      'avg_NEES_p': self.ANEES_p,
+                                      'avg_NEES_q': self.ANEES_q,
                                       'ARMSE_p': self.ARMSE_p,
                                       'ARMSE_q': self.ARMSE_q}
         # print('Save config file....')
@@ -60,8 +62,8 @@ class EvaluationReport:
         self.directory = section.get('directory', 'default')
         self.fn_gt = section.get('fn_gt', 'default')
         self.fn_est = section.get('fn_est', 'default')
-        self.ANEES_p = section.get('ANEES_p', 'default')
-        self.ANEES_q = section.get('ANEES_q', 'default')
+        self.ANEES_p = section.get('avg_NEES_p', 'default')
+        self.ANEES_q = section.get('avg_NEES_q', 'default')
         self.ARMSE_p = section.get('ARMSE_p', 'default')
         self.ARMSE_q = section.get('ARMSE_q', 'default')
 

@@ -38,14 +38,14 @@ from scipy.stats.distributions import chi2
 
 import matplotlib.pyplot as plt
 
-
+# Single run NEES of an estimated trajectory. Take multiple corresponding to one true trajectory, to obtain a propper ANEES
 class TrajectoryNEES:
     NEES_p_vec = None
     NEES_q_vec = None
     NEES_T_vec = None
-    ANEES_p = None
-    ANEES_q = None
-    ANEES_T = None
+    avg_NEES_p = None
+    avg_NEES_q = None
+    avg_NEES_T = None
     t_vec = None
 
     def __init__(self, traj_est, traj_err):
@@ -60,12 +60,12 @@ class TrajectoryNEES:
         if traj_err.err_rep_type == ErrorRepresentationType.se3_tau:
             T_err_vec = np.hstack((traj_err.p_vec, traj_err.theta_q_vec))
             self.NEES_T_vec = TrajectoryNEES.toNEES_arr(traj_est.Sigma_T_vec, T_err_vec)
-            self.ANEES_T = np.mean(self.NEES_T_vec)
+            self.avg_NEES_T = np.mean(self.NEES_T_vec)
         else:
             self.NEES_p_vec = TrajectoryNEES.toNEES_arr(traj_est.Sigma_p_vec, traj_err.p_vec)
             self.NEES_q_vec = TrajectoryNEES.toNEES_arr(traj_est.Sigma_R_vec, traj_err.theta_q_vec)
-            self.ANEES_p = np.mean(self.NEES_p_vec)
-            self.ANEES_q = np.mean(self.NEES_q_vec)
+            self.avg_NEES_p = np.mean(self.NEES_p_vec)
+            self.avg_NEES_q = np.mean(self.NEES_q_vec)
 
     def plot(self, fig=None, cfg=None):
         if cfg is None:
