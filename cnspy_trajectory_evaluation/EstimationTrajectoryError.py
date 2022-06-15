@@ -55,10 +55,6 @@ class EstimationTrajectoryError:
 
         # convert the traj_err into the error representation used
         theta_vec = SpatialConverter.convert_q_vec_to_theta_vec(traj_err.q_vec, rot_err_rep=err_rep_type)
-        traj_est_err = TrajectoryEstimationError(t_vec=traj_err.t_vec,
-                                                      p_vec=traj_err.p_vec,
-                                                      q_vec=traj_err.q_vec,
-                                                      theta_q_vec=theta_vec,
-                                                      est_err_type=est_err_type,
-                                                      err_rep_type=err_rep_type)
+        traj_est_err = TrajectoryEstimationError(t_vec=traj_err.t_vec, nu_vec=traj_err.p_vec, theta_vec=theta_vec,
+                                                 est_err_type=est_err_type, err_rep_type=err_rep_type)
         return traj_est_err

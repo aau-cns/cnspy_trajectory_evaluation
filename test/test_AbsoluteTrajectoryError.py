@@ -20,6 +20,7 @@
 import os
 import unittest
 from cnspy_spatial_csv_formats.CSVSpatialFormat import CSVSpatialFormat, EstimationErrorType, ErrorRepresentationType, CSVSpatialFormatType
+from cnspy_trajectory.TrajectoryEstimated import TrajectoryEstimated
 from cnspy_trajectory_evaluation.AbsoluteTrajectoryError import *
 from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter, TrajectoryPlotConfig, TrajectoryPlotTypes
 from cnspy_trajectory.TrajectoryErrorType import TrajectoryErrorType
@@ -31,9 +32,7 @@ SAMPLE_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'samp
 class AbsoluteTrajectoryError_Test(unittest.TestCase):
 
     def get_trajectories(self):
-        traj_est = TrajectoryEstimated(fmt=CSVSpatialFormat(est_err_type=EstimationErrorType.type5,
-                                                            err_rep_type=ErrorRepresentationType.theta_R,
-                                                            fmt_type=CSVSpatialFormatType.PosOrientWithCov))
+        traj_est = TrajectoryEstimated()
         self.assertTrue(traj_est.load_from_CSV(str(SAMPLE_DATA_DIR + '/ID1-pose-est-posorient-cov.csv')))
         traj_gt = Trajectory()
         self.assertTrue(traj_gt.load_from_CSV(str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')))
