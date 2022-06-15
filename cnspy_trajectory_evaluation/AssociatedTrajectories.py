@@ -41,9 +41,9 @@ class AssociatedTrajectories:
         assert (os.path.exists(fn_gt))
         assert (os.path.exists((fn_est)))
 
-        self.csv_df_gt = CSV2DataFrame(filename=fn_gt)
+        self.csv_df_gt = CSV2DataFrame(fn=fn_gt)
         assert (self.csv_df_gt.data_loaded)
-        self.csv_df_est = CSV2DataFrame(filename=fn_est)
+        self.csv_df_est = CSV2DataFrame(fn=fn_est)
         assert (self.csv_df_est.data_loaded)
 
         if version_info[0] < 3:

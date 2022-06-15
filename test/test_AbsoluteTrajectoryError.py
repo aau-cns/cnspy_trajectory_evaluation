@@ -32,7 +32,7 @@ class AbsoluteTrajectoryError_Test(unittest.TestCase):
 
     def get_trajectories(self):
         traj_est = TrajectoryEstimated(fmt=CSVSpatialFormat(est_err_type=EstimationErrorType.type5,
-                                                            err_rep_type=ErrorRepresentationType.R_small_theta,
+                                                            err_rep_type=ErrorRepresentationType.theta_R,
                                                             fmt_type=CSVSpatialFormatType.PosOrientWithCov))
         self.assertTrue(traj_est.load_from_CSV(str(SAMPLE_DATA_DIR + '/ID1-pose-est-posorient-cov.csv')))
         traj_gt = Trajectory()
@@ -61,7 +61,7 @@ class AbsoluteTrajectoryError_Test(unittest.TestCase):
 
         traj_gt = Trajectory(t_vec=t_vec, q_vec=q_vec, p_vec=p_vec)
         traj_est_fmt = CSVSpatialFormat(est_err_type=EstimationErrorType.type5,
-                                        err_rep_type=ErrorRepresentationType.R_small_theta,
+                                        err_rep_type=ErrorRepresentationType.theta_R,
                                         fmt_type=CSVSpatialFormatType.TUM)
         traj_est = TrajectoryEstimated(t_vec=t_vec, q_vec=q_vec, p_vec=p_vec, fmt=traj_est_fmt)
 

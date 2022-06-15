@@ -48,7 +48,7 @@ class EstimationTrajectoryError:
         assert (isinstance(traj_gt, Trajectory))
 
         est_err_type = traj_est.format.estimation_error_type  # EstimationErrorType.type1,
-        err_rep_type = traj_est.format.rotation_error_representation  # ErrorRepresentationType.R_small_theta
+        err_rep_type = traj_est.format.rotation_error_representation  # ErrorRepresentationType.theta_R
         traj_err_type = TrajectoryErrorType(err_type=est_err_type)
         traj_err = AbsoluteTrajectoryError.compute_trajectory_error(traj_est=traj_est, traj_gt=traj_gt,
                                                                          traj_err_type=traj_err_type)

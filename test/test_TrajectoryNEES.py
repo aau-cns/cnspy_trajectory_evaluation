@@ -46,7 +46,7 @@ class TrajectoryNEES_Test(unittest.TestCase):
         self.assertTrue(traj_est.load_from_CSV(str(SAMPLE_DATA_DIR + '/ID1-pose-est-posorient-cov.csv')))
         traj_est.format = CSVSpatialFormat(fmt_type=CSVSpatialFormatType.PosOrientWithCov,
                                            est_err_type=EstimationErrorType.type5,
-                                           err_rep_type=ErrorRepresentationType.R_small_theta)
+                                           err_rep_type=ErrorRepresentationType.theta_R)
         traj_gt = Trajectory()
         self.assertTrue(traj_gt.load_from_CSV(str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')))
         return traj_est, traj_gt

@@ -57,7 +57,7 @@ class TrajectoryNEES:
 
 
         self.t_vec = traj_est.t_vec
-        if traj_err.err_rep_type == ErrorRepresentationType.se3_tau:
+        if traj_err.err_rep_type == ErrorRepresentationType.tau_se3:
             T_err_vec = np.hstack((traj_err.p_vec, traj_err.theta_q_vec))
             self.NEES_T_vec = TrajectoryNEES.toNEES_arr(traj_est.Sigma_T_vec, T_err_vec)
             self.avg_NEES_T = np.mean(self.NEES_T_vec)
