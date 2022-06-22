@@ -19,7 +19,7 @@
 # Requirements:
 # numpy, pandas, cnspy_numpy_utils, cnspy_trajectory, scipy, matplotlib
 ########################################################################################################################
-
+from sys import version_info
 import numpy as np
 import pandas as pandas
 from spatialmath import base
@@ -28,6 +28,7 @@ from cnspy_spatial_csv_formats.ErrorRepresentationType import ErrorRepresentatio
 from cnspy_spatial_csv_formats.EstimationErrorType import EstimationErrorType
 from cnspy_trajectory.SpatialConverter import SpatialConverter
 from cnspy_trajectory.Trajectory import Trajectory
+from cnspy_trajectory.TrajectoryBase import TrajectoryBase
 from cnspy_trajectory.TrajectoryEstimationError import TrajectoryEstimationError
 from cnspy_trajectory.TrajectoryPlotUtils import TrajectoryPlotUtils
 from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
@@ -38,34 +39,57 @@ from scipy.stats.distributions import chi2
 
 import matplotlib.pyplot as plt
 
+# TODO: the NEES depends on the state/error representation, meaning if the the state is in SE(3) we only obtain one
+#  NEES value per time step, while if the state is a product manifold of R(3)xSO(3) we obtain two values! Per definition,
+#  we should always consider a trajectory NEES from elements of SE(3). Meaning separation position and orientation is a
+#  (dated) special case. So the error representation type decides in the end with NEES is computed, thus a factory needs
+#  to be created that created the corresponding NEES object.
+
 # Single run NEES of an estimated trajectory. Take multiple corresponding to one true trajectory, to obtain a propper ANEES
-class TrajectoryNEES:
+class TrajectoryPosOrientNEES(TrajectoryBase):
     NEES_p_vec = None
-    NEES_q_vec = None
-    NEES_T_vec = None
-    avg_NEES_p = None
-    avg_NEES_q = None
-    avg_NEES_T = None
-    t_vec = None
-
-    def __init__(self, traj_est, traj_err):
-        assert (isinstance(traj_est, TrajectoryEstimated))
-        assert (isinstance(traj_err, TrajectoryEstimationError))
-
-        assert traj_est.format.rotation_error_representation == traj_err.err_rep_type
-        assert traj_est.format.estimation_error_type == traj_err.est_err_type
+    NEES_R_vec = None
+    num_run = 0
+    # private metrics:
+    # force access to average NEES via method get_avg_NEES()!
+    __avg_NEES_p = None
+    __avg_NEES_R = None
 
 
-        self.t_vec = traj_est.t_vec
-        if traj_err.err_rep_type == ErrorRepresentationType.tau_se3:
-            T_err_vec = np.hstack((traj_err.p_vec, traj_err.theta_q_vec))
-            self.NEES_T_vec = TrajectoryNEES.toNEES_arr(traj_est.Sigma_T_vec, T_err_vec)
-            self.avg_NEES_T = np.mean(self.NEES_T_vec)
-        else:
-            self.NEES_p_vec = TrajectoryNEES.toNEES_arr(traj_est.Sigma_p_vec, traj_err.p_vec)
-            self.NEES_q_vec = TrajectoryNEES.toNEES_arr(traj_est.Sigma_R_vec, traj_err.theta_q_vec)
-            self.avg_NEES_p = np.mean(self.NEES_p_vec)
-            self.avg_NEES_q = np.mean(self.NEES_q_vec)
+    def __init__(self, traj_est=None, traj_err=None, num_run=0, df=None, fn=None):
+        TrajectoryBase.__init__(self)
+        if fn is not None:
+            self.load_from_CSV(fn)
+        elif df is not None:
+            self.load_from_DataFrame(df)
+        elif traj_est is not None and traj_err is not None:
+            assert (isinstance(traj_est, TrajectoryEstimated))
+            assert (isinstance(traj_err, TrajectoryEstimationError))
+
+            assert traj_est.format.rotation_error_representation == traj_err.err_rep_type
+            assert traj_est.format.estimation_error_type == traj_err.est_err_type
+
+            self.num_run = num_run
+            self.t_vec = traj_est.t_vec
+            if traj_err.err_rep_type == ErrorRepresentationType.tau_se3:
+                Sigma_p_vec = traj_est.Sigma_T_vec[:, 0:3, 0:3]
+                Sigma_R_vec = traj_est.Sigma_T_vec[:, 3:6, 3:6]
+            else:
+                Sigma_p_vec = traj_est.Sigma_p_vec
+                Sigma_R_vec = traj_est.Sigma_R_vec
+
+            self.NEES_p_vec = TrajectoryPosOrientNEES.toNEES_arr(Sigma_p_vec, traj_err.nu_vec)
+            self.NEES_R_vec = TrajectoryPosOrientNEES.toNEES_arr(Sigma_R_vec, traj_err.theta_vec)
+
+
+    def get_avg_NEES(self):
+        if self.__avg_NEES_p is None:
+            self.compute_avg_NEES()
+        return self.__avg_NEES_p, self.__avg_NEES_R
+
+    def compute_avg_NEES(self):
+        self.__avg_NEES_p = np.mean(self.NEES_p_vec)
+        self.__avg_NEES_R = np.mean(self.NEES_R_vec)
 
     def plot(self, fig=None, cfg=None):
         if cfg is None:
@@ -74,33 +98,49 @@ class TrajectoryNEES:
             fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
 
         ax1 = fig.add_subplot(211)
-        TrajectoryNEES.ax_plot_nees(ax1, 3, conf_ival=0.997, NEES_vec=self.NEES_p_vec, x_linespace=self.t_vec)
+        TrajectoryPosOrientNEES.ax_plot_nees(ax1, 3, conf_ival=0.997, NEES_vec=self.NEES_p_vec, x_linespace=self.t_vec)
         ax1.set_ylabel('NEES pos')
         ax1.legend(shadow=True, fontsize='x-small')
         ax1.grid()
         ax2 = fig.add_subplot(212)
-        TrajectoryNEES.ax_plot_nees(ax2, 3, conf_ival=0.997, NEES_vec=self.NEES_q_vec, x_linespace=self.t_vec)
+        TrajectoryPosOrientNEES.ax_plot_nees(ax2, 3, conf_ival=0.997, NEES_vec=self.NEES_R_vec, x_linespace=self.t_vec)
         ax2.set_ylabel('NEES rot')
         ax2.legend(shadow=True, fontsize='x-small')
         ax2.grid()
 
         TrajectoryPlotConfig.show_save_figure(cfg, fig)
 
-    def save_to_CSV(self, filename):
+    def to_DataFrame(self):
         t_rows, t_cols = self.t_vec.shape
         p_rows, p_cols = self.NEES_p_vec.shape
-        q_rows, q_cols = self.NEES_q_vec.shape
+        q_rows, q_cols = self.NEES_R_vec.shape
         assert (t_rows == p_rows)
         assert (t_rows == q_rows)
         assert (t_cols == 1)
         assert (p_cols == 1)
         assert (q_cols == 1)
-        data_frame = pandas.DataFrame({'t': self.t_vec[:, 0],
-                                       'nees_p': self.NEES_p_vec[:, 0],
-                                       'nees_q': self.NEES_q_vec[:, 0]})
-        data_frame.to_csv(filename, sep=',', index=False,
-                          header=['#t', 'nees_p', 'nees_rpy'],
-                          columns=['t', 'nees_q', 'nees_rpy'])
+
+        run_vec = np.repeat(self.num_run, self.num_elems(), axis=0)
+        df = pandas.DataFrame({'t': self.t_vec[:, 0],
+                               'NEES_p': self.NEES_p_vec[:, 0],
+                               'NEES_R': self.NEES_R_vec[:, 0],
+                               'num_run': run_vec.tolist()})
+        return df
+
+    def load_from_DataFrame(self, df, fmt_type=None):
+        assert (isinstance(df, pandas.DataFrame))
+        if version_info[0] < 3:
+            self.t_vec = df.as_matrix(['t'])
+            self.NEES_p_vec = df.as_matrix(['NEES_p'])
+            self.NEES_R_vec = df.as_matrix(['NEES_R'])
+            num_run_vec = df.as_matrix(['num_run'])
+        else:
+            self.t_vec = df[['t']].to_numpy()
+            self.NEES_p_vec = df[['NEES_p']].to_numpy()
+            self.NEES_R_vec = df[['NEES_R']].to_numpy()
+            num_run_vec = df[['num_run']].to_numpy()
+        self.num_run = num_run_vec[0]
+        pass
 
     # https://de.mathworks.com/help/fusion/ref/trackerrormetrics-system-object.html
     @staticmethod
@@ -112,9 +152,9 @@ class TrajectoryNEES:
         nees_arr = np.zeros((l, 1))
         for i in range(0, l):
             try:
-                nees_arr[i] = TrajectoryNEES.toNEES(P=P_arr[i], err=err_arr[i])
+                nees_arr[i] = TrajectoryPosOrientNEES.toNEES(P=P_arr[i], err=err_arr[i])
             except np.linalg.LinAlgError:
-                print("TrajectoryNEES.toNEES(): covariance causes np.linalg.LinAlgError! ")
+                print("TrajectoryPosOrientNEES.toNEES(): covariance causes np.linalg.LinAlgError! ")
                 print(P_arr[i])
 
         return nees_arr
@@ -161,8 +201,8 @@ class TrajectoryNEES:
         TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=NEES_vec,
                                         colors=[color], labels=['avg. NEES={:.3f}'.format(avg_NEES)], ls=ls)
 
-        interval = TrajectoryNEES.chi_square_confidence_bounds(confidence_interval=conf_ival,
-                                                               degrees_of_freedom=dim)
+        interval = TrajectoryPosOrientNEES.chi_square_confidence_bounds(confidence_interval=conf_ival,
+                                                                        degrees_of_freedom=dim)
         y_values = np.ones((l, 1))
         TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * interval[1],
                                         colors=['k'],
