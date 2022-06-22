@@ -50,55 +50,61 @@ class AbsoluteTrajectoryError_Test(unittest.TestCase):
         p_vec = (p_vec.T)
 
         q_vec = np.zeros((4, 6), dtype=float)
-        q_vec[:, 0] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 20, 45], unit='deg', order='xyz'))
-        q_vec[:, 1] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 25, 45], unit='deg', order='xyz'))
-        q_vec[:, 2] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 30, 45], unit='deg', order='xyz'))
-        q_vec[:, 3] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 35, 45], unit='deg', order='xyz'))
-        q_vec[:, 4] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 40, 45], unit='deg', order='xyz'))
-        q_vec[:, 5] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 45, 45], unit='deg', order='xyz'))
+        q_vec[:, 0] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 20, 45], unit='deg', order='zyx'))
+        q_vec[:, 1] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 25, 45], unit='deg', order='zyx'))
+        q_vec[:, 2] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 30, 45], unit='deg', order='zyx'))
+        q_vec[:, 3] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 35, 45], unit='deg', order='zyx'))
+        q_vec[:, 4] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 40, 45], unit='deg', order='zyx'))
+        q_vec[:, 5] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 45, 45], unit='deg', order='zyx'))
         q_vec = q_vec.T
 
         traj_gt = Trajectory(t_vec=t_vec, q_vec=q_vec, p_vec=p_vec)
         traj_est_fmt = CSVSpatialFormat(est_err_type=EstimationErrorType.type5,
                                         err_rep_type=ErrorRepresentationType.theta_R,
                                         fmt_type=CSVSpatialFormatType.TUM)
-        traj_est = TrajectoryEstimated(t_vec=t_vec, q_vec=q_vec, p_vec=p_vec, fmt=traj_est_fmt)
+        traj_est = TrajectoryEstimated(t_vec=t_vec, q_vec=q_vec, p_vec=p_vec)
+        traj_est.set_format(fmt=traj_est_fmt)
 
         ATE = AbsoluteTrajectoryError(traj_gt=traj_gt, traj_est=traj_est)
-        ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=True, radians=False,
+        ATE.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, radians=False,
                                                    plot_type=TrajectoryPlotTypes.plot_2D_over_t),
                           angles=True)
 
+        of = 1
         q_vec2 = np.zeros((4, 6), dtype=float)
-        q_vec2[:, 0] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10+90, 20, 45], unit='deg', order='xyz'))
-        q_vec2[:, 1] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10-90, 25, 45], unit='deg', order='xyz'))
-        q_vec2[:, 2] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 30, 45], unit='deg', order='xyz'))
-        q_vec2[:, 3] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 35+90, 45], unit='deg', order='xyz'))
-        q_vec2[:, 4] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 40-90, 45], unit='deg', order='xyz'))
-        q_vec2[:, 5] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 45, 45+90], unit='deg', order='xyz'))
+        q_vec2[:, 0] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10+of, 20, 45], unit='deg', order='zyx'))
+        q_vec2[:, 1] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10-of, 25, 45], unit='deg', order='zyx'))
+        q_vec2[:, 2] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 30, 45]   , unit='deg', order='zyx'))
+        q_vec2[:, 3] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 35+of, 45], unit='deg', order='zyx'))
+        q_vec2[:, 4] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 40-of, 45], unit='deg', order='zyx'))
+        q_vec2[:, 5] = SpatialConverter.SO3_to_HTMQ_quaternion(SO3.RPY([10, 45, 45+of], unit='deg', order='zyx'))
         q_vec2 = q_vec2.T
 
         #q_vec2 = np.copy(q_vec)
         p_vec2 = np.copy(p_vec)
         p_vec2[:, 0] = p_vec2[:, 0] * 1.5
-        traj_est = TrajectoryEstimated(t_vec=t_vec, q_vec=q_vec2, p_vec=p_vec2, fmt=traj_est_fmt)
+        traj_est = TrajectoryEstimated(t_vec=t_vec, q_vec=q_vec2, p_vec=p_vec2)
+        traj_est.set_format(fmt=traj_est_fmt)
         ATE2_global = AbsoluteTrajectoryError(traj_gt=traj_gt, traj_est=traj_est,
                                               traj_err_type=TrajectoryErrorType.global_pose())
-        ATE2_global.plot_pose_err(cfg=TrajectoryPlotConfig(show=True, radians=False,
+        ATE2_global.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, radians=False,
                                                            plot_type=TrajectoryPlotTypes.plot_2D_over_t), angles=True)
-        print('ATE2_global done:ARMSE p={:.2f}, q={:.2f}'.format(ATE2_global.ARMSE_p, ATE2_global.ARMSE_q_deg))
+        ARMSE_p, ARMSE_R = ATE2_global.traj_err.get_ARMSE()
+        print('ATE2_global done:ARMSE p={:.2f}, q={:.2f}'.format(ARMSE_p, ARMSE_R))
 
         ATE2_local = AbsoluteTrajectoryError(traj_gt=traj_gt, traj_est=traj_est,
                                              traj_err_type=TrajectoryErrorType.local_pose())
-        ATE2_local.plot_pose_err(cfg=TrajectoryPlotConfig(show=True, radians=False,
+        ATE2_local.plot_pose_err(cfg=TrajectoryPlotConfig(show=False, radians=False,
                                                           plot_type=TrajectoryPlotTypes.plot_2D_over_t), angles=True)
-        print('ATE2_local done:ARMSE p={:.2f}, q={:.2f}'.format(ATE2_local.ARMSE_p, ATE2_local.ARMSE_q_deg))
+        ARMSE_p, ARMSE_R = ATE2_local.traj_err.get_ARMSE()
+        print('ATE2_local done:ARMSE p={:.2f}, q={:.2f}'.format(ARMSE_p, ARMSE_R))
 
         ATE2_loc_glob = AbsoluteTrajectoryError(traj_gt=traj_gt, traj_est=traj_est,
                                                 traj_err_type=TrajectoryErrorType.global_p_local_q())
         ATE2_loc_glob.plot_pose_err(cfg=TrajectoryPlotConfig(show=True, radians=False,
                                                              plot_type=TrajectoryPlotTypes.plot_2D_over_t), angles=True)
-        print('ATE2_loc_glob done:ARMSE p={:.2f}, q={:.2f}'.format(ATE2_loc_glob.ARMSE_p, ATE2_loc_glob.ARMSE_q_deg))
+        ARMSE_p, ARMSE_R = ATE2_loc_glob.traj_err.get_ARMSE()
+        print('ATE2_loc_glob done:ARMSE p={:.2f}, q={:.2f}'.format(ARMSE_p, ARMSE_R))
 
     def test_ATE1_loc_global(self):
         traj_est, traj_gt = self.get_trajectories()
