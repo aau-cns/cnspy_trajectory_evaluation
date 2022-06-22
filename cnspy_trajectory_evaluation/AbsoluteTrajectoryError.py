@@ -48,6 +48,9 @@ class AbsoluteTrajectoryError:
                                                                          traj_err_type=traj_err_type)
         pass
 
+    def plot_pose_err(self, fig=None, cfg=None, angles=False, plot_rpy=False):
+        TrajectoryError.plot_pose_err(traj_est=self.traj_est, traj_err=self.traj_err, traj_gt=self.traj_gt,
+                                      cfg=cfg, angles=angles, plot_rpy=plot_rpy)
     @staticmethod
     def compute_scale(p_gt_vec, p_est_vec):
         # scale drift
@@ -162,25 +165,21 @@ class AbsoluteTrajectoryError:
         e_q_vec = np.zeros(np.shape(q_est))  # [x,y,z,w]
 
         for i in range(np.shape(p_est)[0]):
-            q_wb_est = q_est[i, :]  # [x,y,z,w] quaternion vector
-            q_wb_gt = q_gt[i, :]  # [x,y,z,w] quaternion vector
-
-            q_wb_est = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_wb_est).unit()
-            q_wb_gt = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_wb_gt).unit()
-
+            R_Gest_B_est = SpatialConverter.HTMQ_quaternion_to_rot(q_est[i, :]) # [x,y,z,w] quaternion vector
+            R_G_B_gt = SpatialConverter.HTMQ_quaternion_to_rot(q_gt[i, :])      # [x,y,z,w] quaternion vector
             # Error definitions for global orientation perturbation:
-            # R_wb_gt = R_wb_err * R_wb_est
-            # R_wb_err = R_wb_gt * R_wb_est'
-            q_wb_err = q_wb_gt * q_wb_est.conj()
+            # R_G_B_gt = R_G_Gest_err * R_Gest_B_est
+            # R_G_Gest_err = R_G_B_gt * R_Gest_B_est'
+
+            R_G_Gest_err = np.dot(R_G_B_gt, R_Gest_B_est.T)
 
             # Error definition for global position perturbation
-            R_G_Gest_err = q_wb_err.R
             p_GB_in_G_gt = p_gt[i, :]
             p_Gest_B_in_Gest_est = p_est[i, :]
             p_G_Gest_in_G_err = p_GB_in_G_gt - np.dot(R_G_Gest_err, p_Gest_B_in_Gest_est)
 
             e_p_vec[i, :] = p_G_Gest_in_G_err
-            e_q_vec[i, :] = SpatialConverter.UnitQuaternion_to_HTMQ_quaternion(q_wb_err)
+            e_q_vec[i, :] = SpatialConverter.SO3_to_HTMQ_quaternion(R_G_Gest_err)
 
         # global absolute position RMSE
 
