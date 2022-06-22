@@ -24,7 +24,7 @@ from cnspy_trajectory_evaluation.TrajectoryAlignmentTypes import TrajectoryAlign
 from cnspy_trajectory_evaluation.AlignedTrajectories import AlignedTrajectories
 from cnspy_trajectory_evaluation.AssociatedTrajectories import AssociatedTrajectories
 from cnspy_trajectory_evaluation.AbsoluteTrajectoryError import AbsoluteTrajectoryError
-from cnspy_trajectory_evaluation.TrajectoryNEES import TrajectoryNEES
+from cnspy_trajectory_evaluation.TrajectoryPosOrientNEES import TrajectoryPosOrientNEES
 from cnspy_trajectory_evaluation.EvaluationReport import EvaluationReport
 from cnspy_trajectory.Trajectory import Trajectory
 from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
@@ -52,13 +52,11 @@ class TrajectoryEvaluation:
         aligned.save(result_dir=result_dir, prefix=prefix)
 
         ATE = AbsoluteTrajectoryError(traj_est=aligned.traj_est_matched_aligned, traj_gt=aligned.traj_gt_matched)
-        self.report.ARMSE_p = ATE.ARMSE_p
-        self.report.ARMSE_q = ATE.ARMSE_q_deg
+        self.report.ARMSE_p, self.report.ARMSE_R = ATE.traj_err.get_ARMSE()
         ATE.traj_err.save_to_CSV(result_dir + '/' + prefix + 'err_matched_aligned.csv')
 
-        NEES = TrajectoryNEES(traj_est=aligned.traj_est_matched_aligned, traj_err=ATE.traj_err)
-        self.report.ANEES_p = NEES.avg_NEES_p
-        self.report.ANEES_q = NEES.avg_NEES_q
+        NEES = TrajectoryPosOrientNEES(traj_est=aligned.traj_est_matched_aligned, traj_err=ATE.traj_err)
+        self.report.ANEES_p, self.report.ANEES_R =  NEES.get_avg_NEES()
         NEES.save_to_CSV(result_dir + '/' + prefix + 'nees_matched_aligned.csv')
 
         self.report.save(result_dir + '/' + prefix + 'report.ini')

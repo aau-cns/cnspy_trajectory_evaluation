@@ -45,9 +45,9 @@ class EvaluationReport_Test(unittest.TestCase):
         report.fn_gt = str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv')
         report.fn_est = str(SAMPLE_DATA_DIR + '/ID1-pose-est-posorient-cov.csv')
         report.ANEES_p = 0.1
-        report.ANEES_q = 0.2
+        report.ANEES_R = 0.2
         report.ARMSE_p = 0.3
-        report.ARMSE_q = 0.4
+        report.ARMSE_R = 0.4
 
         fn = str(SAMPLE_DATA_DIR + '/results/eval-report.ini')
         report.save(fn)

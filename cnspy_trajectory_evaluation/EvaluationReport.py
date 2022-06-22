@@ -26,16 +26,17 @@ import configparser
 
 class EvaluationReport:
     def __init__(self, directory='', fn_gt='', fn_est='', alignment='none',
-                 num_aligned_samples=0, avg_NEES_p=0.0, ANEES_q=0.0, RMSE_p=0.0, RMSE_q=0.0):
+                 num_aligned_samples=0, num_runs=0, ANEES_p=0.0, ANEES_R=0.0, ARMSE_p=0.0, ARMSE_R=0.0):
         self.directory = directory
         self.fn_gt = fn_gt
         self.fn_est = fn_est
         self.alignment = str(alignment)
         self.num_aligned_samples = int(num_aligned_samples)
-        self.ANEES_p = avg_NEES_p
-        self.ANEES_q = ANEES_q
-        self.ARMSE_p = RMSE_p
-        self.ARMSE_q = RMSE_q
+        self.num_runs = int(num_runs)
+        self.ANEES_p = ANEES_p
+        self.ANEES_R = ANEES_R
+        self.ARMSE_p = ARMSE_p
+        self.ARMSE_R = ARMSE_R
 
     def save(self, fn):
         config = configparser.ConfigParser()
@@ -44,10 +45,10 @@ class EvaluationReport:
                                       'fn_est': self.fn_est,
                                       'alignment': self.alignment,
                                       'num_aligned_samples': self.num_aligned_samples,
-                                      'avg_NEES_p': self.ANEES_p,
-                                      'avg_NEES_q': self.ANEES_q,
+                                      'ANEES_p': self.ANEES_p,
+                                      'ANEES_R': self.ANEES_R,
                                       'ARMSE_p': self.ARMSE_p,
-                                      'ARMSE_q': self.ARMSE_q}
+                                      'ARMSE_R': self.ARMSE_R}
         # print('Save config file....')
         with open(fn, 'w') as configfile:
             config.write(configfile)
@@ -62,8 +63,8 @@ class EvaluationReport:
         self.directory = section.get('directory', 'default')
         self.fn_gt = section.get('fn_gt', 'default')
         self.fn_est = section.get('fn_est', 'default')
-        self.ANEES_p = section.get('avg_NEES_p', 'default')
-        self.ANEES_q = section.get('avg_NEES_q', 'default')
+        self.ANEES_p = section.get('ANEES_p', 'default')
+        self.ANEES_R = section.get('ANEES_R', 'default')
         self.ARMSE_p = section.get('ARMSE_p', 'default')
-        self.ARMSE_q = section.get('ARMSE_q', 'default')
+        self.ARMSE_R = section.get('ARMSE_R', 'default')
 
