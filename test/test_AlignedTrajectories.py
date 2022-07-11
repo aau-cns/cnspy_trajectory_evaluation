@@ -20,6 +20,7 @@
 import os
 import unittest
 import time
+import matplotlib.pyplot as plt
 from cnspy_trajectory.Trajectory import Trajectory
 from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
 from cnspy_trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
@@ -48,14 +49,33 @@ class AlignedTrajectories_Test(unittest.TestCase):
 
     def test_align_trajectories(self):
         associated = self.get_associated()
-        aligned = AlignedTrajectories(associated=associated)
-        aligned.save(result_dir=str(SAMPLE_DATA_DIR + '/results/'))
-        traj_est_matched = Trajectory(df=associated.data_frame_est_matched)
-        plot_gt = TrajectoryPlotter(traj_obj=aligned.traj_gt_matched)
-        plot_est = TrajectoryPlotter(traj_obj=traj_est_matched)
-        plot_est_aligned = TrajectoryPlotter(traj_obj=aligned.traj_est_matched_aligned)
+        aligned = AlignedTrajectories(associated=associated, alignment_type=TrajectoryAlignmentTypes.se3, num_frames=1)
 
-        TrajectoryPlotter.multi_plot_3D(traj_list=[plot_gt, plot_est, plot_est_aligned],
+        cfg = TrajectoryPlotConfig()
+        cfg.show = False
+        fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
+        ax = fig.add_subplot(111, projection='3d')
+        aligned.traj_gt_matched.plot_3D(fig=fig, cfg=cfg, ax=ax, label='ground truth')
+        alignment_list = TrajectoryAlignmentTypes.list()
+
+        for i in range(len(alignment_list)):
+            type_  = alignment_list[i]
+            num_frames = 1
+            if type_ is 'sim3':
+                num_frames = 2
+            aligned_ = AlignedTrajectories(associated=associated, alignment_type=TrajectoryAlignmentTypes(type_), num_frames=num_frames)
+            aligned_.save(result_dir=str(SAMPLE_DATA_DIR + '/results/'), prefix=str(type_))
+            aligned_.traj_est_matched_aligned.plot_3D(cfg=cfg, fig=fig, ax=ax, label=str(type_))
+
+        plt.draw()
+        plt.pause(0.001)
+        plt.show()
+
+
+        aligned.save(result_dir=str(SAMPLE_DATA_DIR + '/results/'), prefix='default')
+
+        traj_est_matched = Trajectory(df=associated.data_frame_est_matched)
+        TrajectoryPlotter.multi_plot_3D(traj_list=[aligned.traj_gt_matched, traj_est_matched, aligned.traj_est_matched_aligned],
                                         cfg=TrajectoryPlotConfig(),
                                         name_list=['gt_matched', 'est_matched', 'est_matched_aligned'])
 
