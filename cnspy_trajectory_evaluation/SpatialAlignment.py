@@ -92,6 +92,7 @@ class SpatialAlignement:
 
         theta = SpatialAlignement.get_best_yaw(q_0.R)
         R = SO3.Rz(theta)
+        R = np.array(R)
         t = p_gt_0 - np.dot(R, p_es_0)
 
         return R, t
@@ -118,6 +119,7 @@ class SpatialAlignement:
 
         if n_aligned == 1:
             R, t = SpatialAlignement.align_position_yaw_single(est_p_arr, gt_p_arr, est_q_arr, gt_q_arr)
+            R = np.array(R)
             return R, t
         else:
             idxs = SpatialAlignement.get_indices(n_aligned, est_p_arr.shape[0])
@@ -157,6 +159,7 @@ class SpatialAlignement:
         R = q_0.unit().R
         t = p_gt_0 - np.dot(R, p_es_0)
 
+        R = np.array(R)
         return R, t
 
     @staticmethod
@@ -242,6 +245,7 @@ class SpatialAlignement:
 
         t = mu_M - s * np.dot(R, mu_D)
 
+        R = np.array(R)
         return s, R, t
 
     @staticmethod

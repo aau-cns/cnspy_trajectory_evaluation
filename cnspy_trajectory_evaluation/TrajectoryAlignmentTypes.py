@@ -37,6 +37,12 @@ class TrajectoryAlignmentTypes(Enum):
         return self.value
 
     @staticmethod
+    def list():
+        return list([str(TrajectoryAlignmentTypes.sim3), str(TrajectoryAlignmentTypes.se3),
+                     str(TrajectoryAlignmentTypes.posyaw), str(TrajectoryAlignmentTypes.pos),
+                     str(TrajectoryAlignmentTypes.none)])
+
+    @staticmethod
     def trajectory_aligment(traj_est, traj_gt, method='sim3', num_frames=-1):
         """
         calculate s, R, t so that:
