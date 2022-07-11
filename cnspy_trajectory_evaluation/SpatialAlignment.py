@@ -68,7 +68,7 @@ class SpatialAlignement:
     @staticmethod
     def align_position_yaw_single(est_p_arr, gt_p_arr, est_q_arr, gt_q_arr):
         """
-        calcualte the 4DOF transformation: yaw R and translation t so that:
+        Calculate the 4DOF transformation: yaw R and translation t so that:
             gt = R * est + t
         Using only the first poses of est and gt
 
@@ -86,9 +86,8 @@ class SpatialAlignement:
         p_es_0, q_es_0 = est_p_arr[0, :], est_q_arr[0, :]
         p_gt_0, q_gt_0 = gt_p_arr[0, :], gt_q_arr[0, :]
 
-        indices = [3, 0, 1, 2]
-        q_es_0 = UnitQuaternion(v=q_es_0[indices])
-        q_gt_0 = UnitQuaternion(v=q_gt_0[indices])
+        q_es_0 = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_es_0).unit()
+        q_gt_0 = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_gt_0).unit()
         q_0 = q_es_0 * q_gt_0.conj()
 
         theta = SpatialAlignement.get_best_yaw(q_0.R)
@@ -100,7 +99,7 @@ class SpatialAlignement:
     @staticmethod
     def align_position_yaw(est_p_arr, gt_p_arr, est_q_arr, gt_q_arr, n_aligned=1):
         """
-        calcualte the 4DOF transformation: yaw R and translation t so that:
+        Calculate the 4DOF transformation: yaw R and translation t so that:
             gt = R * est + t
         Using only the first poses of est and gt
 
@@ -152,7 +151,6 @@ class SpatialAlignement:
         p_es_0 = est_p_arr[0, :]
         p_gt_0 = gt_p_arr[0, :]
 
-        indices = [3, 0, 1, 2]
         q_est_0 = SpatialConverter.HTMQ_quaternion_to_Quaternion(est_q_arr[0, :])
         q_gt_0 = SpatialConverter.HTMQ_quaternion_to_Quaternion(gt_q_arr[0, :])
         q_0 = q_gt_0 * q_est_0.conj()
@@ -165,7 +163,8 @@ class SpatialAlignement:
     def align_SE3(est_p_arr, gt_p_arr, est_q_arr, gt_q_arr, n_aligned=-1):
         """
             Calculate SE3 transformation R and t so that:
-            gt = R * est + t
+            t_gt = R_gt_est * t_est + t_gt_est_in_gt
+            R_gt = R_gt_est * R_est
 
         Input:
         est_p_arr -- estimated cnspy_trajectory positions (nx3) over n-time steps, numpy array type
@@ -211,7 +210,7 @@ class SpatialAlignement:
         t -- translation vector (3x1)  (t_gt_est_in_gt)
         """
 
-        # substract mean
+        # subtract mean
         mu_M = gt_pos_arr.mean(0)
         mu_D = est_pos_arr.mean(0)
         model_zerocentered = gt_pos_arr - mu_M
