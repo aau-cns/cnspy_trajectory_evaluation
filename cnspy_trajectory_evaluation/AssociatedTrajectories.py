@@ -84,7 +84,7 @@ class AssociatedTrajectories:
 
     def get_trajectories(self):
         # returns Tr_est_matched, Tr_gt_matched
-        if self.csv_df_est.format == CSVSpatialFormatType.PosOrientWithCov:
+        if self.csv_df_est.format.has_uncertainty():
             return TrajectoryEstimated(df=self.data_frame_est_matched), Trajectory(df=self.data_frame_gt_matched)
         else:
             return Trajectory(df=self.data_frame_est_matched), Trajectory(df=self.data_frame_gt_matched)
