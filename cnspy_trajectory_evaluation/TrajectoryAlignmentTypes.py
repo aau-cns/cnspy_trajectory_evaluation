@@ -85,9 +85,7 @@ class TrajectoryAlignmentTypes(Enum):
             R_GN, p_GN_in_G = SpatialAlignement.align_position_yaw(p_NB_in_N_arr=p_es, p_GB_in_G_arr=p_gt,
                                                                    q_NB_arr=q_es, q_GB_arr=q_gt, n_aligned=num_frames)
         elif method == TrajectoryAlignmentTypes.pos:
-            R_GN, p_GN_in_G = SpatialAlignement.align_SE3(p_NB_in_N_arr=p_es, p_GB_in_G_arr=p_gt, q_NB_arr=q_es,
-                                                          q_GB_arr=q_gt, n_aligned=num_frames)
-            R_GN = np.identity(3)
+            p_GN_in_G = SpatialAlignement.align_position(p_NB_in_N_arr=p_es, p_GB_in_G_arr=p_gt, n_aligned=num_frames)
         elif method == TrajectoryAlignmentTypes.none:
             R_GN = np.identity(3)
             p_GN_in_G = np.zeros((3,))

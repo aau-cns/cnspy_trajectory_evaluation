@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from spatialmath import UnitQuaternion, SO3
 
+from cnspy_trajectory.SpatialConverter import SpatialConverter
 from cnspy_trajectory.Trajectory import Trajectory
 from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
 from cnspy_trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
@@ -58,10 +59,11 @@ class AlignedTrajectories_Test(unittest.TestCase):
         R_GN = np.array(R_GN.R)
         p_GN_in_G = np.array([1, 2, 4])
         scale = 1.0
-
+        T_GN = SpatialConverter.p_R_to_SE3(p_GN_in_G, R_GN)
+        T_NG = T_GN.inv()
 
         traj_NB = traj_GB.clone()
-        traj_NB.transform(scale=scale, t=p_GN_in_G, R=R_GN)
+        traj_NB.transform(scale=scale, t=T_NG.t, R=T_NG.R)
 
         print('True transformation between G and N: ' + '\n\tscale:' + str(scale) + '\n\tR_GN:' + str(R_GN) +
               '\n\tt_GN: ' + str(p_GN_in_G))
@@ -76,7 +78,7 @@ class AlignedTrajectories_Test(unittest.TestCase):
         for i in range(len(alignment_list)):
             type_  = alignment_list[i]
             num_frames = 1
-            if type_ is 'sim3':
+            if num_frames == 1 and type_ is 'sim3':
                 num_frames = 2
 
             scale_est, R_GN_est, p_GN_in_G_est = TrajectoryAlignmentTypes.trajectory_aligment(traj_NB=traj_NB,

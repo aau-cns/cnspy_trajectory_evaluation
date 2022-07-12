@@ -66,16 +66,16 @@ class SpatialAlignement:
         return idxs
 
     @staticmethod
-    def align_position_yaw_single(p_NB_in_N_arr, p_GB_in_B_arr, q_NB_arr, q_GB_arr):
+    def align_position_yaw_single(p_NB_in_N_arr, p_GB_in_G_arr, q_NB_arr, q_GB_arr):
         """
-        Calculate the 4DOF transformation (Rz(yaw_GN) and translation t_GN_in_G)  between G (Global) and N (Navigation)
+        Calculate the 4DOF transformation (Rz(yaw_GN) and translation p_GN_in_G)  between G (Global) and N (Navigation)
         reference frame assuming identical B (Body) so that:
           p_GB_in_G = R_GN * p_NB_in_N + p_GN_in_N
         Using only the first poses of est and gt
 
         Input:
         p_NB_in_N_arr -- estimated cnspy_trajectory positions (nx3) over n-time steps, numpy array type
-        p_GB_in_B_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        p_GB_in_G_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
         q_NB_arr -- estimated cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
         q_GB_arr -- ground-truth cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
 
@@ -84,19 +84,17 @@ class SpatialAlignement:
         p_GN_in_G -- translation vector (3x1)  (position from Global to Navigation expressed in Global)
         """
 
-        p_NB_in_N_0, q_NB_0 = p_NB_in_N_arr[0, :], q_NB_arr[0, :]
-        p_GB_in_G_0, q_GB_0 = p_GB_in_B_arr[0, :], q_GB_arr[0, :]
-
-        q_NB_0 = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_NB_0).unit()
-        q_GB_0 = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_GB_0).unit()
+        q_NB_0 = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_NB_arr[0, :]).unit()
+        q_GB_0 = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_GB_arr[0, :]).unit()
         q_GN_0 = q_GB_0 * q_NB_0.conj()
 
-        theta_GN = SpatialAlignement.get_best_yaw(q_GN_0.R)
+        # R_z(theta_GN) = argmax(R_z' * R_NB * R_GB'), for R_z
+        theta_GN = SpatialAlignement.get_best_yaw(np.transpose(q_GN_0.R))
         R_GN = SO3.Rz(theta_GN)
 
         # Convert to 3x3 np.array
         R_GN = np.array(R_GN)
-        p_GN_in_G = p_GB_in_G_0 - np.dot(R_GN, p_NB_in_N_0)
+        p_GN_in_G = p_GB_in_G_arr[0, :] - np.dot(R_GN, p_NB_in_N_arr[0, :])
 
         return R_GN, p_GN_in_G
 
@@ -109,7 +107,7 @@ class SpatialAlignement:
 
         Input:
         p_NB_in_N_arr -- estimated cnspy_trajectory positions (nx3) over n-time steps, numpy array type
-        p_GB_in_B_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        p_GB_in_G_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
         q_NB_arr -- estimated cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
         q_GB_arr -- ground-truth cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
 
@@ -119,14 +117,17 @@ class SpatialAlignement:
         """
 
         if n_aligned == 1:
-            R_GN, p_GN_in_G = SpatialAlignement.align_position_yaw_single(p_NB_in_N_arr, p_GB_in_G_arr, q_NB_arr, q_GB_arr)
+            R_GN, p_GN_in_G = SpatialAlignement.align_position_yaw_single(p_NB_in_N_arr=p_NB_in_N_arr,
+                                                                          p_GB_in_G_arr=p_GB_in_G_arr,
+                                                                          q_NB_arr=q_NB_arr,
+                                                                          q_GB_arr=q_GB_arr)
             return R_GN, p_GN_in_G
         else:
             idxs = SpatialAlignement.get_indices(n_aligned, p_NB_in_N_arr.shape[0])
-            p_NB_in_N = p_NB_in_N_arr[idxs, 0:3]
-            p_GN_in_G = p_GB_in_G_arr[idxs, 0:3]
-            _, R_GN, p_GN_in_G = SpatialAlignement.align_Umeyama(p_GN_in_G, p_NB_in_N, known_scale=True,
-                                                      yaw_only=True)  # note the order
+            _, R_GN, p_GN_in_G = SpatialAlignement.align_Umeyama(p_GB_in_G_arr=p_GB_in_G_arr[idxs, 0:3],
+                                                                 p_NB_in_N_arr=p_NB_in_N_arr[idxs, 0:3],
+                                                                 known_scale=True,
+                                                                 yaw_only=True)  # note the order
             p_GN_in_G = np.array(p_GN_in_G)
             p_GN_in_G = p_GN_in_G.reshape((3,))
 
@@ -145,7 +146,7 @@ class SpatialAlignement:
 
         Input:
         p_NB_in_N_arr -- estimated cnspy_trajectory positions (nx3) over n-time steps, numpy array type
-        p_GB_in_B_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        p_GB_in_G_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
         q_NB_arr -- estimated cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
         q_GB_arr -- ground-truth cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
 
@@ -153,10 +154,6 @@ class SpatialAlignement:
         R_GN -- rotation matrix (3x3)     (orientation from Global to Navigation)
         p_GN_in_G -- translation vector (3x1)  (position from Global to Navigation expressed in Global)
         """
-
-        p_NB_in_N_0 = p_NB_in_N_arr[0, :]
-        p_GB_in_G_0 = p_GB_in_G_arr[0, :]
-
         q_NB_0 = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_NB_arr[0, :])
         q_GB_0 = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_GB_arr[0, :])
 
@@ -165,7 +162,7 @@ class SpatialAlignement:
         R_GN = q_GN_0.unit().R
 
         # p_G_N_in_G = p_G_B_in_G - R_G_N * p_N_B_in_N
-        p_GN_in_G = p_GB_in_G_0 - np.dot(R_GN, p_NB_in_N_0)
+        p_GN_in_G = p_GB_in_G_arr[0, :] - np.dot(R_GN, p_NB_in_N_arr[0, :])
 
         # Convert to 3x3 np.array
         R_GN = np.array(R_GN)
@@ -182,7 +179,7 @@ class SpatialAlignement:
 
         Input:
         p_NB_in_N_arr -- estimated cnspy_trajectory positions (nx3) over n-time steps, numpy array type
-        p_GB_in_B_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        p_GB_in_G_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
         q_NB_arr -- estimated cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
         q_GB_arr -- ground-truth cnspy_trajectory attitude (nx4), quaternion [x, y, z, w] over n-time steps, numpy array type
 
@@ -191,7 +188,9 @@ class SpatialAlignement:
         p_GN_in_G -- translation vector (3x1)  (position from Global to Navigation expressed in Global)
         """
         if n_aligned == 1:
-            R_GN, p_GN_in_G = SpatialAlignement.align_SE3_single(p_NB_in_N_arr, p_GB_in_G_arr, q_NB_arr, q_GB_arr)
+            R_GN, p_GN_in_G = SpatialAlignement.align_SE3_single(p_NB_in_N_arr=p_NB_in_N_arr,
+                                                                 p_GB_in_G_arr=p_GB_in_G_arr,
+                                                                 q_NB_arr=q_NB_arr, q_GB_arr=q_GB_arr)
             return R_GN, p_GN_in_G
         else:
             idxs = SpatialAlignement.get_indices(n_aligned, p_NB_in_N_arr.shape[0])
@@ -204,6 +203,30 @@ class SpatialAlignement:
             # Convert to 3x3 np.array
             R_GN = np.array(R_GN)
             return R_GN, p_GN_in_G
+
+
+
+    @staticmethod
+    def align_position(p_GB_in_G_arr, p_NB_in_N_arr, n_aligned=-1):
+        """
+        Calculate the 3DOF translation p_GN_in_G  between G (Global) and N (Navigation)
+        reference frame assuming identical B (Body) so that:
+          p_GB_in_G =  p_NB_in_N + p_GN_in_N
+
+        Input:
+        p_GB_in_G_arr -- ground-truth cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+        p_NB_in_N_arr -- estimated cnspy_trajectory positions (nx3) over n-time steps, numpy array type
+
+        Output:
+        p_GN_in_G -- translation vector (3x1)  (position from Global to Navigation expressed in Global)
+        """
+        idxs = SpatialAlignement.get_indices(n_aligned, p_NB_in_N_arr.shape[0])
+
+        mu_p_GB_in_G = p_GB_in_G_arr[idxs, 0:3].mean(0)  # Y - model
+        mu_p_NB_in_N = p_NB_in_N_arr[idxs, 0:3].mean(0)  # X - data
+        # t = mu_Y - c * R * mu_X
+        return  mu_p_GB_in_G -  mu_p_NB_in_N
+
 
     @staticmethod
     def align_Umeyama(p_GB_in_G_arr, p_NB_in_N_arr, known_scale=False, yaw_only=False):
