@@ -226,44 +226,86 @@ class SpatialAlignement:
         """
 
         # subtract mean
-        mu_G = p_GB_in_G_arr.mean(0)  # model
-        mu_N = p_NB_in_N_arr.mean(0)  # data
+        mu_p_GB_in_G = p_GB_in_G_arr.mean(0)  # Y - model
+        mu_p_NB_in_N = p_NB_in_N_arr.mean(0)  # X -data
         # zero centered
-        p_ZB_in_G = p_GB_in_G_arr - mu_G
-        p_ZB_in_N = p_NB_in_N_arr - mu_N
+        p_ZB_in_G = p_GB_in_G_arr - mu_p_GB_in_G
+        p_ZB_in_N = p_NB_in_N_arr - mu_p_NB_in_N
         N = np.shape(p_GB_in_G_arr)[0]
 
         # correlation
         # C = 1/N * Sum((p_GB_in_G_arr - mu_GB_in_G_arr)*(p_NB_in_N_arr - mu_NB_in_N_arr)^\transpose)
-        C = 1.0 / N * np.dot(p_ZB_in_G.transpose(), p_ZB_in_N)
-        Sigma2_p_ZB_in_N = 1.0 / N * np.multiply(p_ZB_in_N, p_ZB_in_N).sum()
+        # from Zhang and Scaramuzza: C = 1.0 / N * np.dot(p_ZB_in_G.transpose(), p_ZB_in_N)
+
+        # from Carlo Nicolini: https://gist.github.com/CarloNicolini/7118015
+        # from Umeyama: Sigma_XY = 1/N * Sum((Y - mu_Y) * (X - mu_X)'), with X the data, Y the model
+        Correlation_NG = 1.0 / N * np.dot(p_ZB_in_G.transpose(), p_ZB_in_N)
+
 
         # UDV' = svd(C)
-        U_svd, D_svd, V_svd = np.linalg.linalg.svd(C)
+        U_svd, D_svd, V_svd = np.linalg.linalg.svd(Correlation_NG,full_matrices=True,compute_uv=True)
         D_svd = np.diag(D_svd)
         V_svd = np.transpose(V_svd)
 
-        W = np.eye(3)
+        S = np.eye(3)
         if (np.linalg.det(U_svd) * np.linalg.det(V_svd) < 0):
-            W[2, 2] = -1
+            S[2, 2] = -1
 
         if yaw_only:
             rot_C = np.dot(p_ZB_in_N.transpose(), p_ZB_in_G)
             theta = SpatialAlignement.get_best_yaw(rot_C)
             R_GN = SO3.Rz(theta)
         else:
-            R_GN = np.dot(U_svd, np.dot(W, np.transpose(V_svd)))
+            R_GN = np.dot(U_svd, np.dot(S, np.transpose(V_svd)))
 
         if known_scale:
             s_GN = 1
         else:
-            s_GN = 1.0 / Sigma2_p_ZB_in_N * np.trace(np.dot(D_svd, W))
+            Sigma2_p_ZB_in_N = 1.0 / N * np.multiply(p_ZB_in_N, p_ZB_in_N).sum()
+            s_GN = 1.0 / Sigma2_p_ZB_in_N * np.trace(np.dot(D_svd, S))
 
-        p_GN_in_G = mu_G - s_GN * np.dot(R_GN, mu_N)
+        # t = mu_Y - c * R * mu_X
+        p_GN_in_G = mu_p_GB_in_G - s_GN * np.dot(R_GN, mu_p_NB_in_N)
 
         # Convert to 3x3 np.array
         R_GN = np.array(R_GN)
         return s_GN, R_GN, p_GN_in_G
+
+    @staticmethod
+    def ralign(X, Y):
+        """
+        Copyright: Carlo Nicolini, 2013
+        Code adapted from the Mark Paskin Matlab version
+        from http://openslam.informatik.uni-freiburg.de/data/svn/tjtf/trunk/matlab/ralign.m
+        """
+        # X = data, Y = model
+        m, n = X.shape
+
+        mx = X.mean(1)
+        my = Y.mean(1)
+        Xc = X - np.tile(mx, (n, 1)).T
+        Yc = Y - np.tile(my, (n, 1)).T
+
+        sx = np.mean(np.sum(Xc * Xc, 0))
+        sy = np.mean(np.sum(Yc * Yc, 0))
+
+        Sxy = np.dot(Yc, Xc.T) / n
+
+        U, D, V = np.linalg.svd(Sxy, full_matrices=True, compute_uv=True)
+        V = V.T.copy()
+        # print U,"\n\n",D,"\n\n",V
+        d = np.linalg.det(Sxy)
+        S = np.eye(m)
+        if (np.linalg.det(U) * np.linalg.det(V) < 0):
+            S[2, 2] = -1
+
+        R = np.dot(np.dot(U, S), V.T)
+
+        c = np.trace(np.dot(np.diag(D), S)) / sx
+        t = my - c * np.dot(R, mx)
+
+        return c, R, t
+
 
     @staticmethod
     def align_SIM3(p_NB_in_N_arr, p_GB_in_G_arr, n_aligned=-1):
@@ -282,7 +324,7 @@ class SpatialAlignement:
         p_GN_in_G -- translation vector (3x1)  (position from Global to Navigation expressed in Global)
         """
         idxs = SpatialAlignement.get_indices(n_aligned, p_NB_in_N_arr.shape[0])
-        est_pos = p_NB_in_N_arr[idxs, 0:3]
-        gt_pos = p_GB_in_G_arr[idxs, 0:3]
-        s_GN, R_GN, p_GN_in_G = SpatialAlignement.align_Umeyama(p_GB_in_G_arr=gt_pos, p_NB_in_N_arr=est_pos)  # note the order
+        #s_GN, R_GN, p_GN_in_G = SpatialAlignement.ralign(Y=np.transpose(p_GB_in_G_arr[idxs, 0:3]), X=np.transpose(p_NB_in_N_arr[idxs, 0:3]))  # note the order
+        s_GN, R_GN, p_GN_in_G = SpatialAlignement.align_Umeyama(p_GB_in_G_arr=p_GB_in_G_arr[idxs, 0:3],
+                                                                p_NB_in_N_arr=p_NB_in_N_arr[idxs, 0:3])
         return s_GN, R_GN, p_GN_in_G

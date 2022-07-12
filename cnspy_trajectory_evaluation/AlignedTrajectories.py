@@ -25,21 +25,22 @@ from cnspy_trajectory_evaluation.AssociatedTrajectories import AssociatedTraject
 from cnspy_trajectory_evaluation.TrajectoryAlignmentTypes import TrajectoryAlignmentTypes
 
 
+# TODO: align the gt trajectory to the estimated one, as the estimated global covariance
+#  would need to be transformed as well!
 class AlignedTrajectories:
     traj_est_matched_aligned = None
     traj_gt_matched = None
 
     def __init__(self, associated, alignment_type=TrajectoryAlignmentTypes.sim3, num_frames=-1):
-
-        #        assert (isinstance(associated, AssociatedTrajectories))
+        assert (isinstance(associated, AssociatedTrajectories))
 
         self.traj_est_matched_aligned, self.traj_gt_matched = associated.get_trajectories()
 
-        s, R, t = TrajectoryAlignmentTypes.trajectory_aligment(self.traj_est_matched_aligned, self.traj_gt_matched,
+        s, R_gt_est, t_gt_est_in_gt = TrajectoryAlignmentTypes.trajectory_aligment(self.traj_est_matched_aligned, self.traj_gt_matched,
                                                                method=alignment_type,
                                                                num_frames=num_frames)
 
-        self.traj_est_matched_aligned.transform(scale=s, t=t, R=R)
+        self.traj_est_matched_aligned.transform(scale=s, t=t_gt_est_in_gt, R=R_gt_est)
 
     def save(self, result_dir='.', prefix=None):
         if not prefix:
