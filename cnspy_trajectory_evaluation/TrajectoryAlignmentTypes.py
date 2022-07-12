@@ -43,23 +43,24 @@ class TrajectoryAlignmentTypes(Enum):
                      str(TrajectoryAlignmentTypes.none)])
 
     @staticmethod
-    def trajectory_aligment(traj_est, traj_gt, method='sim3', num_frames=-1):
+    def trajectory_aligment(traj_NB, traj_GB, method='sim3', num_frames=-1):
         """
         calculate s, R, t so that:
-            gt = R * s * est + t
+            traj_GB = TF * traj_NB
+            TF =  [R_GN, p_GN_in_G ]
+                  [ 0  ,    1] in SE(3)
         method can be: sim3, se3, posyaw, none;
         n_aligned: -1 means using all the frames
 
         """
-        assert (isinstance(traj_est, Trajectory))
-        assert (isinstance(traj_gt, Trajectory))
+        assert (isinstance(traj_NB, Trajectory))
+        assert (isinstance(traj_GB, Trajectory))
 
-        p_es = traj_est.p_vec
-        q_es = traj_est.q_vec
-        p_gt = traj_gt.p_vec
-        q_gt = traj_gt.q_vec
+        p_es = traj_NB.p_vec
+        q_es = traj_NB.q_vec
+        p_gt = traj_GB.p_vec
+        q_gt = traj_GB.q_vec
 
-        p_es, p_gt, q_es, q_gt
         assert p_es.shape[1] == 3
         assert p_gt.shape[1] == 3
         assert q_es.shape[1] == 4
@@ -67,26 +68,30 @@ class TrajectoryAlignmentTypes(Enum):
         assert p_es.shape[0] == p_gt.shape[0]
         assert q_es.shape[0] == q_gt.shape[0]
 
-        s = 1
-        R = np.identity(3)
-        t = np.zeros((3,))
+        s_GN = 1
+        R_GN = np.identity(3)
+        p_GN_in_G = np.zeros((3,))
 
         # TODO: hackish, but it is somehow an Enum bug!
         method = TrajectoryAlignmentTypes(str(method))
         if method == TrajectoryAlignmentTypes.sim3:
             assert num_frames >= 2 or num_frames == -1, "sim3 uses at least 2 frames"
-            s, R, t = SpatialAlignement.align_SIM3(p_es, p_gt, num_frames)
+            s_GN, R_GN, p_GN_in_G = SpatialAlignement.align_SIM3(p_NB_in_N_arr=p_es, p_GB_in_G_arr=p_gt,
+                                                                 n_aligned=num_frames)
         elif method == TrajectoryAlignmentTypes.se3:
-            R, t = SpatialAlignement.align_SE3(p_es, p_gt, q_es, q_gt, num_frames)
+            R_GN, p_GN_in_G = SpatialAlignement.align_SE3(p_NB_in_N_arr=p_es, p_GB_in_G_arr=p_gt, q_NB_arr=q_es,
+                                                          q_GB_arr=q_gt, n_aligned=num_frames)
         elif method == TrajectoryAlignmentTypes.posyaw:
-            R, t = SpatialAlignement.align_position_yaw(p_es, p_gt, q_es, q_gt, num_frames)
+            R_GN, p_GN_in_G = SpatialAlignement.align_position_yaw(p_NB_in_N_arr=p_es, p_GB_in_G_arr=p_gt,
+                                                                   q_NB_arr=q_es, q_GB_arr=q_gt, n_aligned=num_frames)
         elif method == TrajectoryAlignmentTypes.pos:
-            R, t = SpatialAlignement.align_SE3(p_es, p_gt, q_es, q_gt, num_frames)
-            R = np.identity(3)
+            R_GN, p_GN_in_G = SpatialAlignement.align_SE3(p_NB_in_N_arr=p_es, p_GB_in_G_arr=p_gt, q_NB_arr=q_es,
+                                                          q_GB_arr=q_gt, n_aligned=num_frames)
+            R_GN = np.identity(3)
         elif method == TrajectoryAlignmentTypes.none:
-            R = np.identity(3)
-            t = np.zeros((3,))
+            R_GN = np.identity(3)
+            p_GN_in_G = np.zeros((3,))
         else:
             assert False, 'unknown alignment method'
 
-        return s, R, t
+        return s_GN, R_GN, p_GN_in_G
