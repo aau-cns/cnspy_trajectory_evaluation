@@ -48,7 +48,9 @@ class OV_TrajectoryEvaluation_Test(unittest.TestCase):
                                     prefix='eval-ID1-'+str(alignment_type) + '_' + str(num_aligned_samples) + '-',
                                     alignment_type=alignment_type,
                                     num_aligned_samples=num_aligned_samples,
-                                    plot=True, save_plot=True)
+                                    plot=True, save_plot=True,
+                                    est_err_type=EstimationErrorType.type5,
+                                    rot_err_rep=ErrorRepresentationType.theta_R)
 
     def test_sim3(self):
         self.start()
@@ -60,7 +62,9 @@ class OV_TrajectoryEvaluation_Test(unittest.TestCase):
                                     prefix='eval-ID1-'+str(alignment_type) + '_' + str(num_aligned_samples) + '-',
                                     alignment_type=alignment_type,
                                     num_aligned_samples=num_aligned_samples,
-                                    plot=True, save_plot=True)
+                                    plot=True, save_plot=True,
+                                    est_err_type=EstimationErrorType.type5,
+                                    rot_err_rep=ErrorRepresentationType.theta_R)
 
         self.stop()
 
