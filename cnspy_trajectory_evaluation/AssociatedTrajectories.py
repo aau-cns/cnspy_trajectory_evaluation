@@ -21,11 +21,18 @@
 ########################################################################################################################
 import os
 from sys import version_info
+
+import numpy as np
+from matplotlib import pyplot as plt
+
 from cnspy_csv2dataframe.CSV2DataFrame import CSV2DataFrame
 from cnspy_spatial_csv_formats.CSVSpatialFormatType import CSVSpatialFormatType
 from cnspy_timestamp_association.TimestampAssociation import TimestampAssociation
+from cnspy_trajectory.PlotLineStyle import PlotLineStyle
 from cnspy_trajectory.Trajectory import Trajectory
 from cnspy_trajectory.TrajectoryEstimated import TrajectoryEstimated
+from cnspy_trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
+from cnspy_trajectory.TrajectoryPlotUtils import TrajectoryPlotUtils
 
 
 class AssociatedTrajectories:
@@ -59,6 +66,13 @@ class AssociatedTrajectories:
             t_vec_est,
             t_vec_gt)
 
+
+        t_est_matched, unique_idx_est = np.unique(t_est_matched, return_index=True)
+        t_gt_matched, unique_idx_gt = np.unique(t_gt_matched, return_index=True)
+
+        idx_est = idx_est[unique_idx_est]
+        idx_gt = idx_gt[unique_idx_gt]
+
         self.data_frame_est_matched = self.csv_df_est.data_frame.loc[idx_est, :]
         self.data_frame_gt_matched = self.csv_df_gt.data_frame.loc[idx_gt, :]
 
@@ -66,6 +80,34 @@ class AssociatedTrajectories:
         # using zip() and * operator to
         # perform Unzipping
         # res = list(zip(*test_list))
+
+    def plot_timestamps(self, cfg=TrajectoryPlotConfig(), fig=None, ax=None, colors=['r', 'g'], labels=['gt', 'est'],
+                    ls_vec=[PlotLineStyle(linestyle='-'), PlotLineStyle(linestyle='-.')]):
+        assert (isinstance(cfg, TrajectoryPlotConfig))
+        if fig is None:
+            fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
+        if ax is None:
+            ax = fig.add_subplot(111)
+        if cfg.title:
+            ax.set_title(cfg.title)
+
+        if version_info[0] < 3:
+            t_vec_gt = self.data_frame_gt_matched.as_matrix(['t'])
+            t_vec_est = self.data_frame_est_matched.as_matrix(['t'])
+        else:
+            t_vec_gt = self.data_frame_gt_matched[['t']].to_numpy()
+            t_vec_est = self.data_frame_est_matched[['t']].to_numpy()
+
+        x_arr = range(len(t_vec_gt))
+        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_arr, t_vec_gt, colors=[colors[0]], labels=[labels[0]], ls=ls_vec[0])
+        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_arr, t_vec_est, colors=[colors[1]], labels=[labels[1]], ls=ls_vec[1])
+
+        ax.grid(b=True)
+        ax.set_xlabel('idx')
+        ax.set_ylabel('time [s]')
+        TrajectoryPlotConfig.show_save_figure(cfg, fig=fig)
+
+        return fig, ax
 
     def save(self, result_dir=None, prefix=None):
         if not result_dir:
