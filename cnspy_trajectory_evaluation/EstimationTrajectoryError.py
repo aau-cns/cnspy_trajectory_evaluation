@@ -49,7 +49,10 @@ class EstimationTrajectoryError:
         assert (isinstance(traj_gt, Trajectory))
 
         est_err_type = traj_est.format.estimation_error_type  # EstimationErrorType.type1,
+        assert est_err_type is not EstimationErrorType.none, 'EstimationTrajectoryError: no estimation error type specified'
         err_rep_type = traj_est.format.rotation_error_representation  # ErrorRepresentationType.theta_R
+        assert err_rep_type is not ErrorRepresentationType.none, 'EstimationTrajectoryError: no error representation type specified'
+
         traj_err_type = TrajectoryErrorType(err_type=est_err_type)
         traj_err = AbsoluteTrajectoryError.compute_trajectory_error(traj_est=traj_est, traj_gt=traj_gt,
                                                                          traj_err_type=traj_err_type)

@@ -20,6 +20,11 @@
 # os
 ########################################################################################################################
 import os
+
+from cnspy_spatial_csv_formats.CSVSpatialFormat import CSVSpatialFormat
+from cnspy_spatial_csv_formats.ErrorRepresentationType import ErrorRepresentationType
+from cnspy_spatial_csv_formats.EstimationErrorType import EstimationErrorType
+from cnspy_trajectory_evaluation.EstimationTrajectoryError import EstimationTrajectoryError
 from cnspy_trajectory_evaluation.TrajectoryAlignmentTypes import TrajectoryAlignmentTypes
 from cnspy_trajectory_evaluation.AlignedTrajectories import AlignedTrajectories
 from cnspy_trajectory_evaluation.AssociatedTrajectories import AssociatedTrajectories
@@ -36,7 +41,8 @@ class TrajectoryEvaluation:
     report = None
 
     def __init__(self, fn_gt, fn_est, result_dir=None, prefix=None,
-                 alignment_type=TrajectoryAlignmentTypes.se3, num_aligned_samples=-1, plot=False, save_plot=False):
+                 alignment_type=TrajectoryAlignmentTypes.se3, num_aligned_samples=-1, plot=False, save_plot=False,
+                 est_err_type=None, rot_err_rep=None):
         if not result_dir:
             result_dir = '.'
         if not prefix:
@@ -51,11 +57,18 @@ class TrajectoryEvaluation:
         aligned = AlignedTrajectories(associated=assoc, alignment_type=alignment_type, num_frames=num_aligned_samples)
         aligned.save(result_dir=result_dir, prefix=prefix)
 
+        # Manually specifying the estimation error type
+        if isinstance(est_err_type, EstimationErrorType):
+            aligned.traj_est_matched_aligned.format.estimation_error_type = est_err_type # EstimationErrorType.type5
+        if isinstance(rot_err_rep, ErrorRepresentationType):
+            aligned.traj_est_matched_aligned.format.rotation_error_representation = rot_err_rep # ErrorRepresentationType.theta_R
+
         ATE = AbsoluteTrajectoryError(traj_est=aligned.traj_est_matched_aligned, traj_gt=aligned.traj_gt_matched)
         self.report.ARMSE_p, self.report.ARMSE_R = ATE.traj_err.get_ARMSE()
         ATE.traj_err.save_to_CSV(result_dir + '/' + prefix + 'err_matched_aligned.csv')
 
-        NEES = TrajectoryPosOrientNEES(traj_est=aligned.traj_est_matched_aligned, traj_err=ATE.traj_err)
+        ETE = EstimationTrajectoryError(traj_est=aligned.traj_est_matched_aligned, traj_gt=aligned.traj_gt_matched)
+        NEES = TrajectoryPosOrientNEES(traj_est=aligned.traj_est_matched_aligned, traj_err=ETE.traj_est_err)
         self.report.ANEES_p, self.report.ANEES_R =  NEES.get_avg_NEES()
         NEES.save_to_CSV(result_dir + '/' + prefix + 'nees_matched_aligned.csv')
 
@@ -73,14 +86,15 @@ class TrajectoryEvaluation:
                 show = False
 
             est_matched, gt_matched = assoc.get_trajectories()
+            est_matched.format = aligned.traj_est_matched_aligned.format
 
             TrajectoryPlotter.multi_plot_3D(traj_list=[gt_matched, est_matched, aligned.traj_est_matched_aligned],
-                                            cfg=TrajectoryPlotConfig(show=show, close_figure=True, save_fn=fn_Multi),
+                                            cfg=TrajectoryPlotConfig(show=show, close_figure=False, save_fn=fn_Multi),
                                             name_list=['gt_matched', 'est_matched', 'est_matched_aligned'])
-            TrajectoryPlotter.plot_pose_err_cov(traj_gt=gt_matched, traj_est=est_matched, traj_err=ATE.traj_err,
-                                                cfg=TrajectoryPlotConfig(show=show, close_figure=True, radians=False,
+            TrajectoryPlotter.plot_pose_err_cov(traj_gt=gt_matched, traj_est= aligned.traj_est_matched_aligned, traj_err=ATE.traj_err,
+                                                cfg=TrajectoryPlotConfig(show=show, close_figure=False, radians=False,
                                                        plot_type=TrajectoryPlotTypes.plot_2D_over_t,
-                                                       save_fn=fn_ATE), angles=True)
+                                                       save_fn=fn_ATE))
 
             NEES.plot(cfg=TrajectoryPlotConfig(show=show, close_figure=True, radians=False, save_fn=fn_NEES,
                                                plot_type=TrajectoryPlotTypes.plot_2D_over_t))
