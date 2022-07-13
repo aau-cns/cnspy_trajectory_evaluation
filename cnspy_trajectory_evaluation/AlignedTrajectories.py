@@ -40,7 +40,7 @@ class AlignedTrajectories:
                                                                method=alignment_type,
                                                                num_frames=num_frames)
 
-        self.traj_est_matched_aligned.transform(scale=s, t=t_gt_est_in_gt, R=R_gt_est)
+        self.traj_est_matched_aligned.transform(scale=s, p_GN_in_G=t_gt_est_in_gt, R_GN=R_gt_est)
 
     def save(self, result_dir='.', prefix=None):
         if not prefix:
