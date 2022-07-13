@@ -30,6 +30,7 @@ from cnspy_trajectory.SpatialConverter import SpatialConverter
 from cnspy_trajectory.Trajectory import Trajectory
 from cnspy_trajectory.TrajectoryBase import TrajectoryBase
 from cnspy_trajectory.TrajectoryEstimationError import TrajectoryEstimationError
+from cnspy_trajectory.TrajectoryError import TrajectoryError
 from cnspy_trajectory.TrajectoryPlotUtils import TrajectoryPlotUtils
 from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
 from cnspy_trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
@@ -46,6 +47,9 @@ import matplotlib.pyplot as plt
 #  to be created that created the corresponding NEES object.
 
 # Single run NEES of an estimated trajectory. Take multiple corresponding to one true trajectory, to obtain a propper ANEES
+from cnspy_trajectory_evaluation.EstimationTrajectoryError import EstimationTrajectoryError
+
+
 class TrajectoryPosOrientNEES(TrajectoryBase):
     NEES_p_vec = None
     NEES_R_vec = None
@@ -80,6 +84,13 @@ class TrajectoryPosOrientNEES(TrajectoryBase):
 
             self.NEES_p_vec = TrajectoryPosOrientNEES.toNEES_arr(Sigma_p_vec, traj_err.nu_vec)
             self.NEES_R_vec = TrajectoryPosOrientNEES.toNEES_arr(Sigma_R_vec, traj_err.theta_vec)
+
+    def subsample(self, step=None, num_max_points=None, verbose=False):
+        sparse_indices = Trajectory.subsample(self, step=step, num_max_points=num_max_points, verbose=verbose)
+
+        self.NEES_p_vec = self.NEES_p_vec[sparse_indices]
+        self.NEES_R_vec = self.NEES_R_vec[sparse_indices]
+        return sparse_indices
 
 
     def get_avg_NEES(self):
