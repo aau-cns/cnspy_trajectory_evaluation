@@ -44,7 +44,7 @@ class AssociatedTrajectories:
 
     matches_est_gt = None  # list of tuples containing [(idx_est, idx_gt), ...]
 
-    def __init__(self, fn_gt, fn_est):
+    def __init__(self, fn_gt, fn_est, relative_timestamps=False, max_difference=0.02):
         assert (os.path.exists(fn_gt))
         assert (os.path.exists((fn_est)))
 
@@ -56,22 +56,41 @@ class AssociatedTrajectories:
         if version_info[0] < 3:
             t_vec_gt = self.csv_df_gt.data_frame.as_matrix(['t'])
             t_vec_est = self.csv_df_est.data_frame.as_matrix(['t'])
+            t_zero = t_vec_gt[0]
+            if relative_timestamps:
+                self.csv_df_gt.data_frame[['t']] = self.csv_df_gt.data_frame[['t']] - t_zero
+                self.csv_df_est.data_frame[['t']] = self.csv_df_est.data_frame[['t']] - t_zero
         else:
             # FIX(scm): for newer versions as_matrix is deprecated, using to_numpy instead
             # from https://stackoverflow.com/questions/60164560/attributeerror-series-object-has-no-attribute-as-matrix-why-is-it-error
             t_vec_gt = self.csv_df_gt.data_frame[['t']].to_numpy()
             t_vec_est = self.csv_df_est.data_frame[['t']].to_numpy()
+            t_zero = t_vec_gt[0]
+            if relative_timestamps:
+                self.csv_df_gt.data_frame[['t']] = self.csv_df_gt.data_frame[['t']] - t_zero
+                self.csv_df_est.data_frame[['t']] = self.csv_df_est.data_frame[['t']] - t_zero
+
+
+        if relative_timestamps:
+            # only relative time stamps:
+            t_vec_gt = t_vec_gt - t_zero
+            t_vec_est = t_vec_est - t_zero
+
+        t_vec_gt = np.round(t_vec_gt, decimals=3)
+        t_vec_est = np.round(t_vec_est, decimals=3)
 
         idx_est, idx_gt, t_est_matched, t_gt_matched = TimestampAssociation.associate_timestamps(
             t_vec_est,
-            t_vec_gt)
+            t_vec_gt,
+            max_difference=max_difference)
 
+        t_est_matched_unique, unique_idx_est = np.unique(t_est_matched, return_index=True)
+        t_gt_matched_unique, unique_idx_gt = np.unique(t_gt_matched, return_index=True)
 
-        t_est_matched, unique_idx_est = np.unique(t_est_matched, return_index=True)
-        t_gt_matched, unique_idx_gt = np.unique(t_gt_matched, return_index=True)
+        unique_indices = np.unique(np.concatenate([unique_idx_est, unique_idx_gt]))
 
-        idx_est = idx_est[unique_idx_est]
-        idx_gt = idx_gt[unique_idx_gt]
+        idx_est = idx_est[unique_indices]
+        idx_gt = idx_gt[unique_indices]
 
         self.data_frame_est_matched = self.csv_df_est.data_frame.loc[idx_est, :]
         self.data_frame_gt_matched = self.csv_df_gt.data_frame.loc[idx_gt, :]
@@ -100,6 +119,7 @@ class AssociatedTrajectories:
 
         x_arr = range(len(t_vec_gt))
         TrajectoryPlotUtils.ax_plot_n_dim(ax, x_arr, t_vec_gt, colors=[colors[0]], labels=[labels[0]], ls=ls_vec[0])
+        x_arr = range(len(t_vec_est))
         TrajectoryPlotUtils.ax_plot_n_dim(ax, x_arr, t_vec_est, colors=[colors[1]], labels=[labels[1]], ls=ls_vec[1])
 
         ax.grid(b=True)
