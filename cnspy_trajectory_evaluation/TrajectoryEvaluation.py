@@ -42,7 +42,8 @@ class TrajectoryEvaluation:
 
     def __init__(self, fn_gt, fn_est, result_dir=None, prefix=None,
                  alignment_type=TrajectoryAlignmentTypes.se3, num_aligned_samples=-1, plot=False, save_plot=False,
-                 est_err_type=None, rot_err_rep=None):
+                 est_err_type=None, rot_err_rep=None,
+                 max_difference=0.001,relative_timestamps=True):
         if not result_dir:
             result_dir = '.'
         if not prefix:
@@ -51,7 +52,13 @@ class TrajectoryEvaluation:
         self.report = EvaluationReport(directory=os.path.abspath(result_dir), fn_gt=os.path.abspath(fn_gt),
                                        fn_est=os.path.abspath(fn_est),
                                        alignment=str(alignment_type), num_aligned_samples=num_aligned_samples)
-        assoc = AssociatedTrajectories(fn_gt=fn_gt, fn_est=fn_est)
+        assoc = AssociatedTrajectories(fn_gt=fn_gt, fn_est=fn_est,
+                                       max_difference=max_difference,
+                                       relative_timestamps=relative_timestamps)
+
+        if plot:
+            assoc.plot_timestamps()
+
         assoc.save(result_dir=result_dir, prefix=prefix)
 
         aligned = AlignedTrajectories(associated=assoc, alignment_type=alignment_type, num_frames=num_aligned_samples)
