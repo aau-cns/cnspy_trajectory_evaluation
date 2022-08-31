@@ -56,7 +56,7 @@ class AssociatedTrajectories:
         if version_info[0] < 3:
             t_vec_gt = self.csv_df_gt.data_frame.as_matrix(['t'])
             t_vec_est = self.csv_df_est.data_frame.as_matrix(['t'])
-            t_zero = t_vec_gt[0]
+            t_zero = min(t_vec_gt[0], t_vec_est[0])
             if relative_timestamps:
                 self.csv_df_gt.data_frame[['t']] = self.csv_df_gt.data_frame[['t']] - t_zero
                 self.csv_df_est.data_frame[['t']] = self.csv_df_est.data_frame[['t']] - t_zero
@@ -65,7 +65,7 @@ class AssociatedTrajectories:
             # from https://stackoverflow.com/questions/60164560/attributeerror-series-object-has-no-attribute-as-matrix-why-is-it-error
             t_vec_gt = self.csv_df_gt.data_frame[['t']].to_numpy()
             t_vec_est = self.csv_df_est.data_frame[['t']].to_numpy()
-            t_zero = t_vec_gt[0]
+            t_zero = min(t_vec_gt[0], t_vec_est[0])
             if relative_timestamps:
                 self.csv_df_gt.data_frame[['t']] = self.csv_df_gt.data_frame[['t']] - t_zero
                 self.csv_df_est.data_frame[['t']] = self.csv_df_est.data_frame[['t']] - t_zero
@@ -76,21 +76,14 @@ class AssociatedTrajectories:
             t_vec_gt = t_vec_gt - t_zero
             t_vec_est = t_vec_est - t_zero
 
-        t_vec_gt = np.round(t_vec_gt, decimals=3)
-        t_vec_est = np.round(t_vec_est, decimals=3)
 
         idx_est, idx_gt, t_est_matched, t_gt_matched = TimestampAssociation.associate_timestamps(
             t_vec_est,
             t_vec_gt,
-            max_difference=max_difference)
+            max_difference=max_difference,
+            round_decimals=6,
+            unique_timestamps=True)
 
-        t_est_matched_unique, unique_idx_est = np.unique(t_est_matched, return_index=True)
-        t_gt_matched_unique, unique_idx_gt = np.unique(t_gt_matched, return_index=True)
-
-        unique_indices = np.unique(np.concatenate([unique_idx_est, unique_idx_gt]))
-
-        idx_est = idx_est[unique_indices]
-        idx_gt = idx_gt[unique_indices]
 
         self.data_frame_est_matched = self.csv_df_est.data_frame.loc[idx_est, :]
         self.data_frame_gt_matched = self.csv_df_gt.data_frame.loc[idx_gt, :]
