@@ -225,7 +225,9 @@ class SpatialAlignement:
         mu_p_GB_in_G = p_GB_in_G_arr[idxs, 0:3].mean(0)  # Y - model
         mu_p_NB_in_N = p_NB_in_N_arr[idxs, 0:3].mean(0)  # X - data
         # t = mu_Y - c * R * mu_X
-        return  mu_p_GB_in_G -  mu_p_NB_in_N
+
+        p_GN_in_G = mu_p_GB_in_G - mu_p_NB_in_N
+        return p_GN_in_G
 
 
     @staticmethod

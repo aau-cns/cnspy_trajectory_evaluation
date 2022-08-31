@@ -30,9 +30,11 @@ from cnspy_trajectory_evaluation.TrajectoryAlignmentTypes import TrajectoryAlign
 class AlignedTrajectories:
     traj_est_matched_aligned = None
     traj_gt_matched = None
+    alignment_type = TrajectoryAlignmentTypes.none
 
     def __init__(self, associated, alignment_type=TrajectoryAlignmentTypes.sim3, num_frames=-1):
         assert (isinstance(associated, AssociatedTrajectories))
+        self.alignment_type = alignment_type
 
         self.traj_est_matched_aligned, self.traj_gt_matched = associated.get_trajectories()
 
@@ -49,7 +51,7 @@ class AlignedTrajectories:
         if not os.path.exists(result_dir):
             os.makedirs(os.path.abspath(result_dir))
         self.traj_est_matched_aligned.save_to_CSV(
-            os.path.join(result_dir, str(prefix) + 'est_matched_aligned.csv'))
+            os.path.join(result_dir, str(prefix) + 'est_matched_aligned_' + str(self.alignment_type) + '.csv'))
         self.traj_gt_matched.save_to_CSV(
             os.path.join(result_dir, str(prefix) + 'gt_matched_aligned.csv'))
 
