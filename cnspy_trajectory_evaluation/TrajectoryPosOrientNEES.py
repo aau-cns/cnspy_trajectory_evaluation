@@ -85,6 +85,7 @@ class TrajectoryPosOrientNEES(TrajectoryBase):
             self.NEES_p_vec = TrajectoryPosOrientNEES.toNEES_arr(Sigma_p_vec, traj_err.nu_vec)
             self.NEES_R_vec = TrajectoryPosOrientNEES.toNEES_arr(Sigma_R_vec, traj_err.theta_vec)
 
+    # overriding abstract method
     def subsample(self, step=None, num_max_points=None, verbose=False):
         sparse_indices = Trajectory.subsample(self, step=step, num_max_points=num_max_points, verbose=verbose)
 
@@ -92,6 +93,19 @@ class TrajectoryPosOrientNEES(TrajectoryBase):
         self.NEES_R_vec = self.NEES_R_vec[sparse_indices]
         return sparse_indices
 
+    # overriding abstract method
+    def sample(self, indices_arr, verbose=False):
+        TrajectoryBase.sample(self, indices_arr=indices_arr)
+        self.NEES_p_vec = self.NEES_p_vec[indices_arr]
+        self.NEES_R_vec = self.NEES_R_vec[indices_arr]
+
+    # overriding abstract method
+    def clone(self):
+        obj = TrajectoryPosOrientNEES()
+        obj.NEES_p_vec = self.NEES_p_vec.copy()
+        obj.NEES_R_vec = self.NEES_R_vec.copy()
+        obj.num_run = self.num_run
+        return obj
 
     def get_avg_NEES(self):
         if self.__avg_NEES_p is None:
@@ -121,6 +135,7 @@ class TrajectoryPosOrientNEES(TrajectoryBase):
 
         TrajectoryPlotConfig.show_save_figure(cfg, fig)
 
+    # overriding abstract method
     def to_DataFrame(self):
         t_rows, t_cols = self.t_vec.shape
         p_rows, p_cols = self.NEES_p_vec.shape
@@ -138,6 +153,7 @@ class TrajectoryPosOrientNEES(TrajectoryBase):
                                'num_run': run_vec.tolist()})
         return df
 
+    # overriding abstract method
     def load_from_DataFrame(self, df, fmt_type=None):
         assert (isinstance(df, pandas.DataFrame))
         if version_info[0] < 3:
