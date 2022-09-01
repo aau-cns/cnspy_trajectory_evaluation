@@ -32,16 +32,22 @@ class AlignedTrajectories:
     traj_gt_matched = None
     alignment_type = TrajectoryAlignmentTypes.none
 
-    def __init__(self, associated, alignment_type=TrajectoryAlignmentTypes.sim3, num_frames=-1):
-        assert (isinstance(associated, AssociatedTrajectories))
+    def __init__(self, associated=None, traj_gt_matched=None, traj_est_matched=None,
+                 alignment_type=TrajectoryAlignmentTypes.sim3, num_frames=-1):
         self.alignment_type = alignment_type
 
-        self.traj_est_matched_aligned, self.traj_gt_matched = associated.get_trajectories()
+        if associated is not None:
+            assert (isinstance(associated, AssociatedTrajectories))
+            traj_est_matched, self.traj_gt_matched = associated.get_trajectories()
+        else:
+            self.traj_gt_matched = traj_gt_matched
 
-        s, R_gt_est, t_gt_est_in_gt = TrajectoryAlignmentTypes.trajectory_aligment(self.traj_est_matched_aligned, self.traj_gt_matched,
+
+        s, R_gt_est, t_gt_est_in_gt = TrajectoryAlignmentTypes.trajectory_aligment(traj_est_matched, self.traj_gt_matched,
                                                                method=alignment_type,
                                                                num_frames=num_frames)
 
+        self.traj_est_matched_aligned = traj_est_matched.clone()
         self.traj_est_matched_aligned.transform(scale=s, p_GN_in_G=t_gt_est_in_gt, R_GN=R_gt_est)
 
     def save(self, result_dir='.', prefix=None):
