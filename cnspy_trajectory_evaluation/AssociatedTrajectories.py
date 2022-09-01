@@ -30,6 +30,7 @@ from cnspy_spatial_csv_formats.CSVSpatialFormatType import CSVSpatialFormatType
 from cnspy_timestamp_association.TimestampAssociation import TimestampAssociation
 from cnspy_trajectory.PlotLineStyle import PlotLineStyle
 from cnspy_trajectory.Trajectory import Trajectory
+from cnspy_trajectory.TrajectoryBase import TrajectoryBase
 from cnspy_trajectory.TrajectoryEstimated import TrajectoryEstimated
 from cnspy_trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
 from cnspy_trajectory.TrajectoryPlotUtils import TrajectoryPlotUtils
@@ -143,3 +144,36 @@ class AssociatedTrajectories:
             return TrajectoryEstimated(df=self.data_frame_est_matched), Trajectory(df=self.data_frame_gt_matched)
         else:
             return Trajectory(df=self.data_frame_est_matched), Trajectory(df=self.data_frame_gt_matched)
+
+    @staticmethod
+    def associate_trajectories(traj_arr, max_difference=0, round_decimals=9, unique_timestamps=False):
+        if isinstance(traj_arr, list) and len(traj_arr) > 1:
+            traj_reference = traj_arr[0]
+            traj_other_arr = traj_arr[1:]
+            assert isinstance(traj_reference, TrajectoryBase)
+
+            # First iteration, find common timestamps among all estimated trajectories
+            common_gt_indices = np.arange(0, traj_reference.num_elems(), dtype=np.int32)
+            for i in range(len(traj_other_arr)):
+                traj_i = traj_other_arr[i]
+                assert isinstance(traj_i, TrajectoryBase)
+                indices_gt_matched, t_gt_matched  = traj_i.sample_at_t_arr(traj_reference.t_vec,
+                                                                              max_difference=max_difference,
+                                                                              round_decimals=round_decimals,
+                                                                              unique_timestamps=unique_timestamps)
+
+                common_gt_indices = np.intersect1d(common_gt_indices, indices_gt_matched)
+
+            # Sample ground-truth trajectories based on common samples
+            traj_reference.sample(common_gt_indices)
+
+            # Second iteration, re-sample all estimated trajectories again!
+            for i in range(len(traj_other_arr)):
+                traj_i = traj_other_arr[i]
+                assert isinstance(traj_i, TrajectoryBase)
+                traj_i.sample_at_t_arr(traj_reference.t_vec,
+                                           max_difference=max_difference,
+                                           round_decimals=round_decimals,
+                                           unique_timestamps=unique_timestamps)
+        else:
+            print("AssociatedTrajectories.associate_trajectories: expected a list of trajectories!")
