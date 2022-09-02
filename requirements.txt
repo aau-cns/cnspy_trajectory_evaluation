@@ -3,6 +3,7 @@ pandas
 spatialmath-python
 scipy
 matplotlib
+joblib
 configparser
 cnspy_numpy_utils
 cnspy_trajectory

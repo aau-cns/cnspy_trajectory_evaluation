@@ -59,7 +59,7 @@ class TrajectoryANNES_Test(unittest.TestCase):
                                      max_difference=0.01,
                                      round_decimals=4,
                                      unique_timestamps=True,
-                                     alignment_type=TrajectoryAlignmentTypes.posyaw,
+                                     alignment_type=TrajectoryAlignmentTypes.none,
                                      num_aligned_samples=1)
         self.stop(info="Evaluating trajectories")
 

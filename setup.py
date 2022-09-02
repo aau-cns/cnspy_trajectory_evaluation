@@ -35,5 +35,5 @@ setup(
     
     packages=find_packages(exclude=["test_*", "TODO*"]),
     python_requires='>=3.6',
-    install_requires=['numpy', 'pandas', 'spatialmath-python', 'scipy', 'matplotlib', 'configparser', 'cnspy_numpy_utils', 'cnspy_trajectory', 'cnspy_timestamp_association', 'cnspy_spatial_csv_formats', 'cnspy_csv2dataframe' ],
+    install_requires=['numpy', 'pandas', 'spatialmath-python', 'scipy', 'matplotlib', 'joblib', 'configparser', 'cnspy_numpy_utils', 'cnspy_trajectory', 'cnspy_timestamp_association', 'cnspy_spatial_csv_formats', 'cnspy_csv2dataframe' ],
 )

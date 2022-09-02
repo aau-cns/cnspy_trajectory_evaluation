@@ -20,6 +20,7 @@
 # numpy, pandas, cnspy_numpy_utils, cnspy_trajectory, scipy, matplotlib
 ########################################################################################################################
 import math
+from joblib import Parallel, delayed
 import numpy as np
 from scipy.stats.distributions import chi2
 import matplotlib.pyplot as plt
@@ -161,9 +162,30 @@ class TrajectoryANEES(TrajectoryBase):
                 chi2.ppf(q=confidence_interval, df=degrees_of_freedom*M)/M)
 
     @staticmethod
+    def process_trajectory_i(i, traj_gt, traj_est_arr, alignment_type, num_aligned_samples, est_err_type, rot_err_rep):
+        traj_i = traj_est_arr[i]
+        assert isinstance(traj_i, TrajectoryBase)
+        aligned = AlignedTrajectories(traj_gt_matched=traj_gt.clone(),
+                                      traj_est_matched=traj_i,
+                                      alignment_type=alignment_type,
+                                      num_frames=num_aligned_samples)
+
+        # Manually specifying the estimation error type
+        if isinstance(est_err_type, EstimationErrorType):
+            aligned.traj_est_matched_aligned.format.estimation_error_type = est_err_type  # EstimationErrorType.type5
+        if isinstance(rot_err_rep, ErrorRepresentationType):
+            aligned.traj_est_matched_aligned.format.rotation_error_representation = rot_err_rep  # ErrorRepresentationType.theta_R
+
+        ETE = EstimationTrajectoryError(traj_est=aligned.traj_est_matched_aligned, traj_gt=aligned.traj_gt_matched)
+        NEES = TrajectoryPosOrientNEES(traj_est=aligned.traj_est_matched_aligned, traj_err=ETE.traj_est_err)
+
+        traj_est = aligned.traj_est_matched_aligned
+        return traj_est, ETE, NEES
+
+    @staticmethod
     def evaluate(traj_gt, traj_est_arr, max_difference=0, round_decimals=9, unique_timestamps=False,
                  alignment_type=TrajectoryAlignmentTypes.se3, num_aligned_samples=-1,
-                 est_err_type=None, rot_err_rep=None):
+                 est_err_type=None, rot_err_rep=None, max_processes=8):
 
         if isinstance(traj_est_arr, list):
             traj_arr = [traj_gt] + traj_est_arr
@@ -176,32 +198,25 @@ class TrajectoryANEES(TrajectoryBase):
                                                       round_decimals=round_decimals,
                                                       unique_timestamps=unique_timestamps)
 
+
+
+        # https://stackoverflow.com/questions/9786102/how-do-i-parallelize-a-simple-python-loop
+        N = len(traj_est_arr)
+        results = Parallel(n_jobs=min(N, max_processes), backend='multiprocessing')(delayed(TrajectoryANEES.process_trajectory_i)(i=i,
+                                         traj_gt=traj_gt, traj_est_arr=traj_est_arr, alignment_type=alignment_type,
+                                         num_aligned_samples=num_aligned_samples, est_err_type=est_err_type,
+                                         rot_err_rep=rot_err_rep) for i in range(N))
+
         ETE_arr = []
         NEES_arr = []
         EST_aligned_arr = []
-        for i in range(len(traj_est_arr)):
-            traj_i = traj_est_arr[i]
-            assert isinstance(traj_i, TrajectoryBase)
-            aligned = AlignedTrajectories(traj_gt_matched=traj_gt,
-                                          traj_est_matched=traj_i,
-                                          alignment_type=alignment_type,
-                                          num_frames=num_aligned_samples)
-
-
-            # Manually specifying the estimation error type
-            if isinstance(est_err_type, EstimationErrorType):
-                aligned.traj_est_matched_aligned.format.estimation_error_type = est_err_type # EstimationErrorType.type5
-            if isinstance(rot_err_rep, ErrorRepresentationType):
-                aligned.traj_est_matched_aligned.format.rotation_error_representation = rot_err_rep # ErrorRepresentationType.theta_R
-
-            ETE = EstimationTrajectoryError(traj_est=aligned.traj_est_matched_aligned, traj_gt=aligned.traj_gt_matched)
-            NEES = TrajectoryPosOrientNEES(traj_est=aligned.traj_est_matched_aligned, traj_err=ETE.traj_est_err)
-
-            EST_aligned_arr.append(aligned.traj_est_matched_aligned)
+        for traj_est, ETE, NEES in results:
+            EST_aligned_arr.append(traj_est)
             ETE_arr.append(ETE)
             NEES_arr.append(NEES)
 
-        return NEES_arr, ETE_arr, EST_aligned_arr, aligned.traj_gt_matched
+        return NEES_arr, ETE_arr, EST_aligned_arr, traj_gt
+
 
 
     @staticmethod
