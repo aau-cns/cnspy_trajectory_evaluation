@@ -208,11 +208,16 @@ class TrajectoryPosOrientNEES(TrajectoryBase):
         return nees
 
     @staticmethod
-    def chi_square_confidence_bounds(confidence_interval=0.95, degrees_of_freedom=3):
+    def chi_square_confidence_bounds(confidence_region=0.95, degrees_of_freedom=3):
+        # returns the [r_lower, r_upper] confidence regions
         # https://stackoverflow.com/questions/53019080/chi2inv-in-python
         # ppf(q, df, loc=0, scale=1) Percent point function (inverse of cdf percentiles).
-        return (chi2.ppf(q=(1.0 - confidence_interval), df=degrees_of_freedom),
-                chi2.ppf(q=confidence_interval, df=degrees_of_freedom))
+
+        alpha = 1 - confidence_region
+        r_upper = chi2.ppf(q=(1.0 - alpha), df=degrees_of_freedom)
+        r_lower = chi2.ppf(q=alpha, df=degrees_of_freedom)
+        return r_lower, r_upper
+
 
     @staticmethod
     def ax_plot_nees(ax, dim, conf_ival, NEES_vec, x_linespace=None, color='r', ls=PlotLineStyle()):
@@ -228,22 +233,23 @@ class TrajectoryPosOrientNEES(TrajectoryBase):
         TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=NEES_vec,
                                         colors=[color], labels=['avg. NEES={:.3f}'.format(avg_NEES)], ls=ls)
 
-        interval = TrajectoryPosOrientNEES.chi_square_confidence_bounds(confidence_interval=conf_ival,
-                                                                        degrees_of_freedom=dim)
+        r_lower, r_upper = TrajectoryPosOrientNEES.chi_square_confidence_bounds(confidence_region=conf_ival,
+                                                                                degrees_of_freedom=dim)
         y_values = np.ones((l, 1))
-        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * interval[1],
+        alpha = 1.0 - conf_ival
+        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * r_upper,
                                         colors=['k'],
-                                        labels=['p={:.3f}->{:.3f}'.format(conf_ival, interval[1])],
+                                        labels=['r1(p={:.3f})={:.3f}'.format(conf_ival, r_upper)],
                                         ls=PlotLineStyle(linewidth=0.5, linestyle='-.'))
 
-        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * interval[0],
+        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * r_lower,
                                         colors=['k'],
-                                        labels=['p={:.3f}->{:.3f}'.format(1.0 - conf_ival, interval[0])],
+                                        labels=['r2(p={:.3f})={:.3f}'.format(conf_ival, r_lower)],
                                         ls=PlotLineStyle(linewidth=0.5, linestyle='-.'))
 
         TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * dim,
                                         colors=['k'],
-                                        labels=['mean={:.1f}'.format(dim)],
+                                        labels=['mean={:.0f}'.format(dim)],
                                         ls=PlotLineStyle(linewidth=0.5, linestyle='--'))
 
         ax.set_xlabel(x_label)

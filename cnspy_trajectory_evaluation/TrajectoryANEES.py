@@ -138,6 +138,8 @@ class TrajectoryANEES(TrajectoryBase):
         ax1.set_ylabel(y_label_prefix + ' ANEES(p)')
         TrajectoryANEES.ax_plot_anees(ax1, self.ANEES_p_vec, self.M, dim=3, x_linespace=x_arr,
                                       color=color, color_bounds=color_bounds, ls=ls)
+        ax1.legend(shadow=True, fontsize='x-small')
+        ax1.grid()
 
         ax2 = fig.add_subplot(212)
         x_arr = TrajectoryPlotUtils.ax_x_linespace(ax=ax2,
@@ -148,18 +150,25 @@ class TrajectoryANEES(TrajectoryBase):
         ax2.set_ylabel(y_label_prefix + ' ANEES(R)')
         TrajectoryANEES.ax_plot_anees(ax2, self.ANEES_R_vec, self.M, dim=3, x_linespace=x_arr,
                                       color=color, color_bounds=color_bounds, ls=ls)
-
+        ax2.legend(shadow=True, fontsize='x-small')
+        ax2.grid()
         TrajectoryPlotConfig.show_save_figure(cfg, fig)
         return fig, ax1, ax2
 
 
     @staticmethod
-    def twosided_chi_squared_confidence_boundaries(M, confidence_interval=0.95, degrees_of_freedom=3):
+    def twosided_chi_squared_confidence_boundaries(M, confidence_region=0.95, degrees_of_freedom=3):
+        # returns the [r_lower, r_upper] confidence bounds
+        # tests: [2.96, 5.18] = twosided_chi_squared_confidence_boundaries(25, 0.95, 4)
         # M Monte Carlo runs
-        # https://stackoverflow.com/questions/53019080/chi2inv-in-python
+        # Sec. 3.7.6 in  Y. Bar-Shalom, X. Li, and T. Kirubarajan, Estimation with Applications to Tracking and Navigation: Theory Algorithms ... Wiley, 2001.
         # EQ (14) in "Scalable and Modular Ultra-Wideband Aided Inertial Navigation", Roland Jung and Stephan Weiss, IEEE IROS, 2022.
-        return (chi2.ppf(q=(1.0 - confidence_interval), df=degrees_of_freedom*M)/M,
-                chi2.ppf(q=confidence_interval, df=degrees_of_freedom*M)/M)
+
+        alpha = 1 - confidence_region
+        r_upper = chi2.ppf(q=(1.0 - 0.5*alpha), df=degrees_of_freedom*M)/M
+        r_lower = chi2.ppf(q=(0.5*alpha), df=degrees_of_freedom*M)/M
+        return r_lower, r_upper
+
 
     @staticmethod
     def process_trajectory_i(i, traj_gt, traj_est_arr, alignment_type, num_aligned_samples, est_err_type, rot_err_rep):
@@ -231,21 +240,21 @@ class TrajectoryANEES(TrajectoryBase):
             ax.set_xlabel('steps')
 
         conf_ival = float(conf_ival)
-        r_1, r_2 = TrajectoryANEES.twosided_chi_squared_confidence_boundaries(M, confidence_interval=conf_ival,
-                                                                        degrees_of_freedom=dim)
+        r_lower, r_upper = TrajectoryANEES.twosided_chi_squared_confidence_boundaries(M, confidence_region=conf_ival,
+                                                                                      degrees_of_freedom=dim)
 
         TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=ANEES_vec,
                                           colors=[color], labels=['avg. ANEES={:.3f}'.format(avg_ANEES)], ls=ls)
 
         y_values = np.ones((l, 1))
-        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * r_1,
+        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * r_lower,
                                         colors=[color_bounds],
-                                        labels=['p={:.3f}->{:.3f}'.format(conf_ival, r_1)],
+                                        labels=['r1(p={:.3f})={:.3f}'.format(conf_ival, r_lower)],
                                         ls=PlotLineStyle(linewidth=0.5, linestyle='-.'))
 
-        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * r_2,
+        TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * r_upper,
                                         colors=[color_bounds],
-                                        labels=['p={:.3f}->{:.3f}'.format(1.0 - conf_ival, r_2)],
+                                        labels=['r2(p={:.3f})={:.3f}'.format(conf_ival, r_upper)],
                                         ls=PlotLineStyle(linewidth=0.5, linestyle='-.'))
 
         TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=y_values * dim,
