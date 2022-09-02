@@ -41,7 +41,7 @@ class TrajectoryANNES_Test(unittest.TestCase):
         fn_gt_csv = str(SAMPLE_DATA_DIR + '/MC/ID1-pose-gt.csv')
         traj_gt = Trajectory(fn=fn_gt_csv)
         traj_est_arr = []
-        for i in range(10):
+        for i in range(11):
             fn_est_csv = str(SAMPLE_DATA_DIR + '/MC/ID1-pose-est-posorient-cov-run{}.csv'.format(i+1))
             traj_est_i = TrajectoryEstimated(fn=fn_est_csv)
             traj_est_arr.append(traj_est_i)
@@ -69,7 +69,7 @@ class TrajectoryANNES_Test(unittest.TestCase):
 
         result_dir = str(SAMPLE_DATA_DIR + '/results/MC')
         for i in range(len(NEES_arr)):
-            NEES_arr[i].plot(cfg=TrajectoryPlotConfig(show=True, close_figure=False,
+            NEES_arr[i].plot(cfg=TrajectoryPlotConfig(show=False, close_figure=True,
                                             result_dir=result_dir, save_fn='NEES_{}.jpg'.format(i)))
 
 
