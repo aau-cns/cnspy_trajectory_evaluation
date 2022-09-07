@@ -45,7 +45,7 @@ class AssociatedTrajectories:
 
     matches_est_gt = None  # list of tuples containing [(idx_est, idx_gt), ...]
 
-    def __init__(self, fn_gt, fn_est, relative_timestamps=False, max_difference=0.02):
+    def __init__(self, fn_gt, fn_est, relative_timestamps=False, max_difference=0.02, subsample=0, verbose=False):
         assert (os.path.exists(fn_gt))
         assert (os.path.exists((fn_est)))
 
@@ -53,6 +53,11 @@ class AssociatedTrajectories:
         assert (self.csv_df_gt.data_loaded)
         self.csv_df_est = CSV2DataFrame(fn=fn_est)
         assert (self.csv_df_est.data_loaded)
+
+        if subsample > 1:
+            subsample = round(subsample, 0)
+            self.csv_df_gt.subsample(step=subsample, verbose=verbose)
+            self.csv_df_est.subsample( step=subsample, verbose=verbose)
 
         if version_info[0] < 3:
             t_vec_gt = self.csv_df_gt.data_frame.as_matrix(['t'])
@@ -88,8 +93,12 @@ class AssociatedTrajectories:
 
         self.data_frame_est_matched = self.csv_df_est.data_frame.loc[idx_est, :]
         self.data_frame_gt_matched = self.csv_df_gt.data_frame.loc[idx_gt, :]
-
         self.matches_est_gt = zip(idx_est, idx_gt)
+
+        if verbose:
+            print("AssociatedTrajectories(): {} timestamps associated.".format(len(idx_est)))
+
+
         # using zip() and * operator to
         # perform Unzipping
         # res = list(zip(*test_list))
