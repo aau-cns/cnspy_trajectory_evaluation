@@ -73,7 +73,6 @@ class TrajectoryEvaluation:
         assoc.save(result_dir=result_dir, prefix=prefix)
 
         aligned = AlignedTrajectories(associated=assoc, alignment_type=alignment_type, num_frames=num_aligned_samples)
-        aligned.save(result_dir=result_dir, prefix=prefix)
         if verbose:
             print("* TrajectoryEvaluation(): Trajectory aligned!")
 
@@ -82,6 +81,12 @@ class TrajectoryEvaluation:
             aligned.traj_est_matched_aligned.format.estimation_error_type = est_err_type # EstimationErrorType.type5
         if isinstance(rot_err_rep, ErrorRepresentationType):
             aligned.traj_est_matched_aligned.format.rotation_error_representation = rot_err_rep # ErrorRepresentationType.theta_R
+        aligned.traj_est_matched_aligned.convert_to_global_covariance()
+        if verbose:
+            print("* TrajectoryEvaluation(): Estimated Covariance converted to global covariance!")
+        aligned.save(result_dir=result_dir, prefix=prefix)
+        if verbose:
+            print("* TrajectoryEvaluation(): Aligned Trajectories saved!")
 
         ATE = AbsoluteTrajectoryError(traj_est=aligned.traj_est_matched_aligned, traj_gt=aligned.traj_gt_matched)
         self.report.ARMSE_p, self.report.ARMSE_R = ATE.traj_err.get_ARMSE()
@@ -119,7 +124,7 @@ class TrajectoryEvaluation:
             est_matched, gt_matched = assoc.get_trajectories()
             est_matched.format = aligned.traj_est_matched_aligned.format
 
-            assoc.plot_timestamps(cfg=TrajectoryPlotConfig(show=show, close_figure=False, save_fn=fn_Timestamps),)
+            assoc.plot_timestamps(cfg=TrajectoryPlotConfig(show=show, close_figure=False, save_fn=fn_Timestamps))
 
 
             TrajectoryPlotter.multi_plot_3D(traj_list=[gt_matched, est_matched, aligned.traj_est_matched_aligned],
