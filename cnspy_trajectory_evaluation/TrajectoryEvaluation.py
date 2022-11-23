@@ -23,6 +23,7 @@ import os
 import argparse
 import time
 
+
 from cnspy_spatial_csv_formats.CSVSpatialFormat import CSVSpatialFormat
 from cnspy_spatial_csv_formats.ErrorRepresentationType import ErrorRepresentationType
 from cnspy_spatial_csv_formats.EstimationErrorType import EstimationErrorType
@@ -50,6 +51,7 @@ class TrajectoryEvaluation:
                  num_aligned_samples=-1,
                  plot=False,
                  save_plot=False,
+                 show_plot=False,
                  est_err_type=None,
                  rot_err_rep=None,
                  max_difference=0.001,
@@ -113,29 +115,28 @@ class TrajectoryEvaluation:
             fn_NEES = ""
             fn_Multi = ""
             fn_Timestamps =""
-            show = True
+
             if save_plot:
                 fn_NEES = result_dir + '/' + prefix + 'NEES.jpg'
                 fn_ATE = result_dir + '/' + prefix + 'ATE.jpg'
                 fn_Multi = result_dir + '/' + prefix + 'traj3D.jpg'
                 fn_Timestamps = result_dir + '/' + prefix + 'timestamps.jpg'
-                show = False
 
             est_matched, gt_matched = assoc.get_trajectories()
             est_matched.format = aligned.traj_est_matched_aligned.format
 
-            assoc.plot_timestamps(cfg=TrajectoryPlotConfig(show=show, close_figure=False, save_fn=fn_Timestamps))
+            assoc.plot_timestamps(cfg=TrajectoryPlotConfig(show=show_plot, close_figure=False, save_fn=fn_Timestamps))
 
 
             TrajectoryPlotter.multi_plot_3D(traj_list=[gt_matched, est_matched, aligned.traj_est_matched_aligned],
-                                            cfg=TrajectoryPlotConfig(show=show, close_figure=False, save_fn=fn_Multi),
+                                            cfg=TrajectoryPlotConfig(show=show_plot, close_figure=False, save_fn=fn_Multi),
                                             name_list=['gt_matched', 'est_matched', 'est_matched_aligned'])
             TrajectoryPlotter.plot_pose_err_cov(traj_gt=gt_matched, traj_est= aligned.traj_est_matched_aligned, traj_err=ATE.traj_err,
-                                                cfg=TrajectoryPlotConfig(show=show, close_figure=False, radians=False,
+                                                cfg=TrajectoryPlotConfig(show=show_plot, close_figure=False, radians=False,
                                                        plot_type=TrajectoryPlotTypes.plot_2D_over_t,
                                                        save_fn=fn_ATE))
 
-            NEES.plot(cfg=TrajectoryPlotConfig(show=show, close_figure=True, radians=False, save_fn=fn_NEES,
+            NEES.plot(cfg=TrajectoryPlotConfig(show=show_plot, close_figure=True, radians=False, save_fn=fn_NEES,
                                                plot_type=TrajectoryPlotTypes.plot_2D_over_t))
 
             if verbose:
@@ -164,6 +165,7 @@ if __name__ == "__main__":
                         default=str(ErrorRepresentationType.theta_R))
     parser.add_argument('--plot', action='store_true', default=True)
     parser.add_argument('--save_plot', action='store_true', default=True)
+    parser.add_argument('--show_plot', action='store_true', default=True)
     parser.add_argument('--relative_timestamp', action='store_true', default=False)
     parser.add_argument('--verbose', action='store_true', default=False)
 
@@ -181,6 +183,7 @@ if __name__ == "__main__":
                                 rot_err_rep=ErrorRepresentationType(args.rot_err_rep),
                                 plot=args.plot,
                                 save_plot=args.save_plot,
+                                show_plot=args.show_plot,
                                 relative_timestamps=args.relative_timestamp,
                                 verbose=args.verbose)
 
