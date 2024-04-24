@@ -46,8 +46,8 @@ class AssociatedTrajectories:
     matches_est_gt = None  # list of tuples containing [(idx_est, idx_gt), ...]
 
     def __init__(self, fn_gt, fn_est, relative_timestamps=False, max_difference=0.02, subsample=0, verbose=False):
-        assert (os.path.exists(fn_gt))
-        assert (os.path.exists((fn_est)))
+        assert (os.path.exists(fn_gt)), str("Path to fn_gt does not exist!:" + str(fn_gt))
+        assert (os.path.exists((fn_est))), str("Path to fn_est does not exist!:" + str(fn_est))
 
         self.csv_df_gt = CSV2DataFrame(fn=fn_gt)
         assert (self.csv_df_gt.data_loaded)
