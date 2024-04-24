@@ -67,6 +67,7 @@ class TrajectoryANNES_Test(unittest.TestCase):
         ANEES = TrajectoryANEES(NEES_arr=NEES_arr)
         self.stop(info="ANEES ")
 
+        self.start()
         result_dir = str(SAMPLE_DATA_DIR + '/results/MC')
         for i in range(len(NEES_arr)):
             NEES_arr[i].plot(cfg=TrajectoryPlotConfig(show=False, close_figure=True,
@@ -77,7 +78,7 @@ class TrajectoryANNES_Test(unittest.TestCase):
         fn_ANEES = 'ANEES.jpg'
         ANEES.plot(cfg=TrajectoryPlotConfig(show=True, close_figure=False,
                                             result_dir=result_dir, save_fn=fn_ANEES))
-
+        self.stop(info="ANEES plots ")
 
 if __name__ == "__main__":
     unittest.main()

@@ -43,7 +43,7 @@ class TrajectoryPosOrientNEES_Test(unittest.TestCase):
 
     def get_trajectories(self):
         traj_est = TrajectoryEstimated(fn=str(SAMPLE_DATA_DIR + '/ID1-pose-est-posorient-cov.csv'))
-        #traj_est.format = CSVSpatialFormat(fmt_type=CSVSpatialFormatType.PosOrientWithCov,
+        #traj_NB.format = CSVSpatialFormat(fmt_type=CSVSpatialFormatType.PosOrientWithCov,
         #                                   est_err_type=EstimationErrorType.type5,
         #                                   err_rep_type=ErrorRepresentationType.theta_R)
         traj_gt = Trajectory(fn=str(SAMPLE_DATA_DIR + '/ID1-pose-gt.csv'))
@@ -65,7 +65,7 @@ class TrajectoryPosOrientNEES_Test(unittest.TestCase):
 
         # TODO:
         #cfg = TrajectoryPlotConfig(show=True, close_figure=False,  radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t)
-        #TrajectoryPlotter.plot_pose_err_cov(traj_est=traj_est, traj_err=ATE.traj_err, traj_gt=traj_gt, cfg=cfg)
+        #TrajectoryPlotter.plot_pose_err_cov(traj_NB=traj_NB, traj_err=ATE.traj_err, traj_GB=traj_GB, cfg=cfg)
 
         self.start()
         NEES = TrajectoryPosOrientNEES(traj_est, ETE.traj_est_err)

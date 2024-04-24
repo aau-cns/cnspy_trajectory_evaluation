@@ -45,6 +45,8 @@ class DifferentialTrajectoryError_Test(unittest.TestCase):
 
     def test_DTE(self):
         traj_est, traj_gt = self.get_trajectories()
+        traj_est.subsample(step=10)
+        traj_gt.subsample(step=10)
 
         R_GN = SO3.Rz(135, unit='deg')
         R_GN = np.array(R_GN.R)
@@ -58,10 +60,10 @@ class DifferentialTrajectoryError_Test(unittest.TestCase):
         DTE.plot_p_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t))
         DTE.plot_rpy_err(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t))
         DTE.plot_pose(cfg=TrajectoryPlotConfig(show=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
-                          plot_angle=True, plot_distance=True)
+                      plot_angle_distance=True, plot_eucl_distance=True)
         DTE.plot_pose(
             cfg=TrajectoryPlotConfig(show=True, radians=False, plot_type=TrajectoryPlotTypes.plot_2D_over_t),
-            plot_angle=True)
+            plot_angle_distance=True, plot_eucl_distance=True)
 
         ARMSE_p, ARMSE_q = DTE.get_ARMSE()
         print('test_DTE done:ARMSE p={:.2f}, q={:.2f}'.format(ARMSE_p, ARMSE_q))
