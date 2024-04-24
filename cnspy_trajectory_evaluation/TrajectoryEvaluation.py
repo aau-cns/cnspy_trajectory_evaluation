@@ -163,9 +163,9 @@ if __name__ == "__main__":
                         default=str(EstimationErrorType.type5))
     parser.add_argument('--rot_err_rep', help='Rotation Error representation type', choices=ErrorRepresentationType.list(),
                         default=str(ErrorRepresentationType.theta_R))
-    parser.add_argument('--plot', action='store_true', default=True)
-    parser.add_argument('--save_plot', action='store_true', default=True)
-    parser.add_argument('--show_plot', action='store_true', default=True)
+    parser.add_argument('--plot', action='store_true', default=False)
+    parser.add_argument('--save_plot', action='store_true', default=False)
+    parser.add_argument('--show_plot', action='store_true', default=False)
     parser.add_argument('--relative_timestamp', action='store_true', default=False)
     parser.add_argument('--verbose', action='store_true', default=False)
 
