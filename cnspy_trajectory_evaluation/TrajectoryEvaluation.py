@@ -144,7 +144,7 @@ class TrajectoryEvaluation:
 
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         description='TrajectoryEvaluation: evaluate and estimated trajectory against a true trajectory')
     parser.add_argument('--fn_gt', help='input ground-truth trajectory CSV file', default="not specified")
@@ -189,3 +189,9 @@ if __name__ == "__main__":
 
     print(" ")
     print("finished after [%s sec]\n" % str(time.time() - tp_start))
+    pass
+
+
+if __name__ == "__main__":
+    main()
+    pass

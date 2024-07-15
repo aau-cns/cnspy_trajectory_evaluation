@@ -9,13 +9,10 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-# Get the release/version string
-with open(path.join(here, 'RELEASE'), encoding='utf-8') as f:
-    release = f.read()
 
 setup(
     name='cnspy_trajectory_evaluation',
-    version=release,
+    version="0.2.2",
     author='Roland Jung',
     author_email='roland.jung@aau.at',    
     description='Evaluation of trajectories.',
@@ -36,4 +33,9 @@ setup(
     packages=find_packages(exclude=["test_*", "TODO*"]),
     python_requires='>=3.6',
     install_requires=['numpy', 'pandas', 'spatialmath-python', 'scipy', 'matplotlib', 'joblib', 'configparser', 'cnspy_numpy_utils', 'cnspy_trajectory', 'cnspy_timestamp_association', 'cnspy_spatial_csv_formats', 'cnspy_csv2dataframe' ],
+    entry_points={
+        'console_scripts': [
+            'TrajectoryEvaluation = cnspy_trajectory_evaluation.TrajectoryEvaluation:main',
+        ],
+    },
 )
