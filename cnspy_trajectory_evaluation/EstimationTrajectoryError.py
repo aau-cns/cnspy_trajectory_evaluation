@@ -32,6 +32,7 @@ from cnspy_spatial_csv_formats.EstimationErrorType import EstimationErrorType
 from cnspy_spatial_csv_formats.ErrorRepresentationType import ErrorRepresentationType
 from cnspy_trajectory.TrajectoryErrorType import TrajectoryErrorType
 
+
 # ETE: computes the estimation error over an trajectory, considering the estimators uncertainty representation.
 # The ETE can be used with the estimated uncertainty to compute the NEES over the trajectory
 class EstimationTrajectoryError:

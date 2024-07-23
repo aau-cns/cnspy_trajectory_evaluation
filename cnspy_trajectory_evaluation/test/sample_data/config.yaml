@@ -1,0 +1,7 @@
+# relative position of the moving tags
+rel_tag_positions: {0:[-0.09, 0.04, -0.045]}
+tag_topics: {0: "/d01/ranging"}
+anchor_topics: {1: "/a01/ranging", 2: "/a02/ranging", 3: "/a03/ranging"}
+pose_topic: "/d01/mavros/vision_pose/pose"
+# relative position of the stationary anchors
+abs_anchor_positions: {1:[-1.306, -4.146, 0.662], 2:[1.748,-4.173,1.878], 3:[2.928,2.47,2.153]}
