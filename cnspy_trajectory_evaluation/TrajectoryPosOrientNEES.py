@@ -123,17 +123,29 @@ class TrajectoryPosOrientNEES(TrajectoryBase):
             fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
 
         ax1 = fig.add_subplot(211)
-        TrajectoryPosOrientNEES.ax_plot_nees(ax1, 3, conf_ival=0.997, NEES_vec=self.NEES_p_vec, x_linespace=self.t_vec)
-        ax1.set_ylabel('NEES pos')
-        ax1.legend(shadow=True, fontsize='x-small')
+        self.plot_NEES_p(ax1=ax1, relative_time=cfg.relative_time)
         ax1.grid()
         ax2 = fig.add_subplot(212)
-        TrajectoryPosOrientNEES.ax_plot_nees(ax2, 3, conf_ival=0.997, NEES_vec=self.NEES_R_vec, x_linespace=self.t_vec)
-        ax2.set_ylabel('NEES rot')
-        ax2.legend(shadow=True, fontsize='x-small')
+        self.plot_NEES_R(ax2=ax2, relative_time=cfg.relative_time)
         ax2.grid()
 
         TrajectoryPlotConfig.show_save_figure(cfg, fig)
+
+    def plot_NEES_p(self, ax1, conf_ival=0.997, relative_time=True):
+        TrajectoryPosOrientNEES.ax_plot_nees(ax1, 3, conf_ival=conf_ival,
+                                             NEES_vec=self.NEES_p_vec,
+                                             x_linespace=self.t_vec,
+                                             relative_time=relative_time)
+        ax1.set_ylabel('NEES pos')
+        ax1.legend(shadow=True, fontsize='x-small')
+
+    def plot_NEES_R(self, ax2, conf_ival=0.997, relative_time=True):
+        TrajectoryPosOrientNEES.ax_plot_nees(ax2, 3, conf_ival=0.997,
+                                             NEES_vec=self.NEES_R_vec,
+                                             x_linespace=self.t_vec,
+                                             relative_time=relative_time)
+        ax2.set_ylabel('NEES rot')
+        ax2.legend(shadow=True, fontsize='x-small')
 
     # overriding abstract method
     def to_DataFrame(self):
@@ -220,14 +232,19 @@ class TrajectoryPosOrientNEES(TrajectoryBase):
 
 
     @staticmethod
-    def ax_plot_nees(ax, dim, conf_ival, NEES_vec, x_linespace=None, color='r', ls=PlotLineStyle()):
+    def ax_plot_nees(ax, dim, conf_ival, NEES_vec, x_linespace=None, color='r', relative_time=True, x_label_prefix='', ls=PlotLineStyle()):
         l = NEES_vec.shape[0]
         avg_NEES = np.mean(NEES_vec)
 
-        x_label = 'rel. t [sec]'
         if x_linespace is None:
             x_linespace = range(0, l)
             x_label = ''
+        else:
+            if relative_time:
+                x_linespace = x_linespace - x_linespace[0]
+                x_label = str(x_label_prefix + 'rel. time [sec]')
+            else:
+                x_label = str(x_label_prefix + 'time [sec]')
 
         conf_ival = float(conf_ival)
         TrajectoryPlotUtils.ax_plot_n_dim(ax, x_linespace=x_linespace, values=NEES_vec,
