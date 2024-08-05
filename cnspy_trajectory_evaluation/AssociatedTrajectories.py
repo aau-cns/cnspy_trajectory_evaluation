@@ -125,7 +125,7 @@ class AssociatedTrajectories:
         x_arr = range(len(t_vec_est))
         TrajectoryPlotUtils.ax_plot_n_dim(ax, x_arr, t_vec_est, colors=[colors[1]], labels=[labels[1]], ls=ls_vec[1])
 
-        ax.grid(b=True)
+        ax.grid()
         ax.set_xlabel('idx')
         ax.set_ylabel('time [s]')
         TrajectoryPlotConfig.show_save_figure(cfg, fig=fig)
@@ -152,7 +152,8 @@ class AssociatedTrajectories:
         if self.csv_df_est.format.has_uncertainty():
             return TrajectoryEstimated(df=self.data_frame_est_matched), Trajectory(df=self.data_frame_gt_matched)
         else:
-            return Trajectory(df=self.data_frame_est_matched), Trajectory(df=self.data_frame_gt_matched)
+            return Trajectory(df=self.data_frame_est_matched,fmt=self.csv_df_est.format), \
+                   Trajectory(df=self.data_frame_gt_matched, fmt=self.csv_df_gt.format)
 
     @staticmethod
     def associate_trajectories(traj_arr, max_difference=0, round_decimals=9, unique_timestamps=False):
