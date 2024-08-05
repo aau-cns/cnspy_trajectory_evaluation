@@ -36,6 +36,7 @@ setup(
     entry_points={
         'console_scripts': [
             'TrajectoryEvaluation = cnspy_trajectory_evaluation.TrajectoryEvaluation:main',
+            'TrajectoryEvaluationTool = cnspy_trajectory_evaluation.TrajectoryEvaluationTool:main',
         ],
     },
 )
