@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from spatialmath import UnitQuaternion, SO3
 
+from cnspy_trajectory.PlotLineStyle import PlotLineStyle
 from cnspy_trajectory.SpatialConverter import SpatialConverter
 from cnspy_trajectory.Trajectory import Trajectory
 from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
@@ -74,7 +75,7 @@ class AlignedTrajectories_Test(unittest.TestCase):
         cfg.show = False
         fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
         ax = fig.add_subplot(111, projection='3d')
-        traj_GB.plot_3D(fig=fig, cfg=cfg, ax=ax, label='ground truth')
+        traj_GB.plot_3D(fig=fig, cfg=cfg, ax=ax, ls=PlotLineStyle(label='ground truth'))
         alignment_list = TrajectoryAlignmentTypes.list()
 
         for i in range(len(alignment_list)):
@@ -122,8 +123,13 @@ class AlignedTrajectories_Test(unittest.TestCase):
         cfg.show = False
         fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
         ax = fig.add_subplot(111, projection='3d')
-        traj_GB.plot_3D(fig=fig, cfg=cfg, ax=ax, label='ground truth')
+        traj_GB.plot_3D(fig=fig, cfg=cfg, ax=ax, ls=PlotLineStyle(label='ground truth'))
         alignment_list = TrajectoryAlignmentTypes.list()
+
+        num_plots = len(alignment_list)
+        cmap = plt.cm.get_cmap("gist_rainbow")
+        colors = cmap(np.linspace(0.01, 0.99, num_plots))
+        ax.set_prop_cycle('color', colors)
 
         for i in range(len(alignment_list)):
             type_  = alignment_list[i]
@@ -142,7 +148,7 @@ class AlignedTrajectories_Test(unittest.TestCase):
             traj_GB_est.transform(scale=scale_est, p_GN_in_G=p_GN_in_G_est, R_GN=R_GN_est)
 
             traj_GB_est.save_to_CSV(fn=str(SAMPLE_DATA_DIR + '/results/trag_GN_aligned_all_' + str(type_)))
-            traj_GB_est.plot_3D(cfg=cfg, fig=fig, ax=ax, label=str(type_), num_markers=0)
+            traj_GB_est.plot_3D(cfg=cfg, fig=fig, ax=ax, ls=PlotLineStyle(label=str(type_), linecolor = colors[i, :]), num_markers=0)
 
         plt.draw()
         plt.pause(0.001)
