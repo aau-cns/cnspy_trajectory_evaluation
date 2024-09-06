@@ -132,10 +132,8 @@ class AbsoluteTrajectoryError:
             # Error definitions for local perturbation:
             # "Quaternion kinematics for the error-state Kalman filter" by Joan Solà, Chapter 4.4.1
             # First:  S = R oplus theta  = R * Exp(theta); with R = reference/gt, theta = perturbation, S = estimate
-            # R_wb_est =  R_wb_gt  * R_wb_err
-            # R_wb_gt = R_wb_est * R_wb_err'
-            # R_wb_err = R_wb_gt' * R_wb_est
-            q_wb_err = q_wb_gt.conj() * q_wb_est
+            # R_wb_gt =  R_wb_est  * R_wb_err
+            q_wb_err = q_wb_est.conj() * q_wb_gt
 
             e_q_vec[i, :] = SpatialConverter.UnitQuaternion_to_HTMQ_quaternion(q_wb_err)
 
@@ -175,13 +173,8 @@ class AbsoluteTrajectoryError:
             q_wb_est = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_wb_est).unit()
             q_wb_gt = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_wb_gt).unit()
 
-            # Error definitions for local perturbation:
-            # "Quaternion kinematics for the error-state Kalman filter" by Joan Solà, Chapter 4.4.1
-            # First:  S = R oplus theta  = R * Exp(theta); with R = reference/gt, theta = perturbation, S = estimate
-            # R_wb_est =  R_wb_gt  * R_wb_err
-            # R_wb_gt = R_wb_est * R_wb_err'
-            # R_wb_err = R_wb_gt' * R_wb_est
-            q_wb_err = q_wb_est.conj() * q_wb_gt
+            # R_wb_gt =  R_wb_err * R_wb_est
+            q_wb_err =  q_wb_gt * q_wb_est.conj()
 
             e_q_vec[i, :] = SpatialConverter.UnitQuaternion_to_HTMQ_quaternion(q_wb_err)
 
@@ -217,21 +210,15 @@ class AbsoluteTrajectoryError:
         e_q_vec = np.zeros(np.shape(q_est))  # [x,y,z,w]
 
         for i in range(np.shape(p_est)[0]):
-            R_Gest_B_est = SpatialConverter.HTMQ_quaternion_to_rot(q_est[i, :]) # [x,y,z,w] quaternion vector
-            R_G_B_gt = SpatialConverter.HTMQ_quaternion_to_rot(q_gt[i, :])      # [x,y,z,w] quaternion vector
-            # Error definitions for global orientation perturbation:
-            # R_G_B_gt = R_G_Gest_err * R_Gest_B_est
-            # R_G_Gest_err = R_G_B_gt * R_Gest_B_est'
+            T_est = SpatialConverter.p_q_HTMQ_to_SE3(p_est[i, :], q_est[i, :])
+            T_gt = SpatialConverter.p_q_HTMQ_to_SE3(p_gt[i, :], q_gt[i, :])
 
-            R_G_Gest_err = np.dot(R_G_B_gt, R_Gest_B_est.T)
+            # T_wb_gt =  T_wb_err * T_wb_est
+            T_err = T_gt*T_est.inv()
 
-            # Error definition for global position perturbation
-            p_GB_in_G_gt = p_gt[i, :]
-            p_Gest_B_in_Gest_est = p_est[i, :]
-            p_G_Gest_in_G_err = p_GB_in_G_gt - np.dot(R_G_Gest_err, p_Gest_B_in_Gest_est)
-
-            e_p_vec[i, :] = p_G_Gest_in_G_err
-            e_q_vec[i, :] = SpatialConverter.SO3_to_HTMQ_quaternion(R_G_Gest_err)
+            p_err, q_err = SpatialConverter.SE3_to_p_q_HTMQ(T_err)
+            e_p_vec[i, :] = p_err
+            e_q_vec[i, :] = q_err
 
         # global absolute position RMSE
 
@@ -263,35 +250,18 @@ class AbsoluteTrajectoryError:
         e_p_vec = np.zeros(np.shape(p_est))
 
         # global orientation error
-        e_q_rmse_deg_vec = np.zeros(np.shape(p_est))
-        e_rpy_vec = np.zeros(np.shape(p_est))
         e_q_vec = np.zeros(np.shape(q_est))  # [x,y,z,w]
 
         for i in range(np.shape(p_est)[0]):
-            q_wb_est = q_est[i, :]  # [x,y,z,w] quaternion vector
-            q_wb_gt = q_gt[i, :]  # [x,y,z,w] quaternion vector
+            T_est = SpatialConverter.p_q_HTMQ_to_SE3(p_est[i, :], q_est[i, :])
+            T_gt = SpatialConverter.p_q_HTMQ_to_SE3(p_gt[i, :], q_gt[i, :])
 
-            q_wb_est = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_wb_est).unit()
-            q_wb_gt = SpatialConverter.HTMQ_quaternion_to_Quaternion(q_wb_gt).unit()
+            # T_wb_gt =  T_wb_err * T_wb_est
+            T_err = T_est.inv()*T_gt
 
-            # Error definitions for global orientation perturbation:
-            # R_wb_gt = R_wb_est * R_wb_err
-            # R_wb_err = R_wb_est' * R_wb_gt
-            q_wb_err = q_wb_est.conj() * q_wb_gt
-
-            # Error definition for global position perturbation
-            R_G_Best_est = q_wb_est.R
-            p_GB_in_B = p_gt[i, :]
-            p_G_Best_in_G_est = p_est[i, :]
-            p_Best_B_in_Best_err = np.dot(np.transpose(R_G_Best_est), (p_GB_in_B - p_G_Best_in_G_est))
-
-            e_p_vec[i, :] = p_Best_B_in_Best_err
-            e_q_vec[i, :] = SpatialConverter.UnitQuaternion_to_HTMQ_quaternion(q_wb_err)
-            e_rpy_vec[i, :] = q_wb_err.rpy(order='zyx', unit='rad')
-            e_q_rmse_deg_vec[i] = np.rad2deg(np.linalg.norm(e_rpy_vec[i, :]))
-
-        # global absolute position RMSE
-        e_p_rmse_vec = np.sqrt(np.sum(e_p_vec ** 2, 1))
+            p_err, q_err = SpatialConverter.SE3_to_p_q_HTMQ(T_err)
+            e_p_vec[i, :] = p_err
+            e_q_vec[i, :] = q_err
 
         # scale drift
         e_scale = AbsoluteTrajectoryError.compute_scale(p_gt, p_est)
