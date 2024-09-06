@@ -23,7 +23,6 @@ import os
 import argparse
 import time
 
-
 from cnspy_spatial_csv_formats.CSVSpatialFormat import CSVSpatialFormat
 from cnspy_spatial_csv_formats.ErrorRepresentationType import ErrorRepresentationType
 from cnspy_spatial_csv_formats.EstimationErrorType import EstimationErrorType
@@ -45,7 +44,9 @@ from cnspy_trajectory.TrajectoryPlotTypes import TrajectoryPlotTypes
 class TrajectoryEvaluation:
     report = None
 
-    def __init__(self, fn_gt, fn_est,
+    def __init__(self, fn_gt: str = "", fn_est: str = "",
+                 traj_gt: Trajectory = None,
+                 traj_est: (Trajectory, TrajectoryEstimated) = None,
                  result_dir=None,
                  prefix=None,
                  subsample=0,
@@ -67,10 +68,19 @@ class TrajectoryEvaluation:
         self.report = EvaluationReport(directory=os.path.abspath(result_dir), fn_gt=os.path.abspath(fn_gt),
                                        fn_est=os.path.abspath(fn_est),
                                        alignment=str(alignment_type), num_aligned_samples=num_aligned_samples)
-        assoc = AssociatedTrajectories(fn_gt=fn_gt, fn_est=fn_est,
-                                       max_difference=max_difference,
-                                       relative_timestamps=relative_timestamps,
-                                       subsample=subsample, verbose=verbose)
+
+        if traj_gt is not None and traj_est is not None:
+            assoc = AssociatedTrajectories(df_gt=traj_gt.to_CSV2DataFrame(), df_est=traj_est.to_CSV2DataFrame(),
+                                           max_difference=max_difference,
+                                           relative_timestamps=relative_timestamps,
+                                           subsample=subsample, verbose=verbose)
+        elif fn_gt and fn_est:
+            assoc = AssociatedTrajectories(fn_gt=fn_gt, fn_est=fn_est,
+                                           max_difference=max_difference,
+                                           relative_timestamps=relative_timestamps,
+                                           subsample=subsample, verbose=verbose)
+        else:
+            assert False, "* TrajectoryEvaluation(): no file names or trajectories provided!"
         if verbose:
             print("* TrajectoryEvaluation(): Trajectory associated!")
 
@@ -80,15 +90,15 @@ class TrajectoryEvaluation:
         if verbose:
             print("* TrajectoryEvaluation(): Trajectory aligned!")
 
-        traj_err_tpye = TrajectoryErrorType()
+        traj_err_type = TrajectoryErrorType()
         # Manually specifying the estimation error type
         if isinstance(rot_err_rep, ErrorRepresentationType) and rot_err_rep is not ErrorRepresentationType.none:
             if isinstance(aligned.traj_est_matched_aligned, TrajectoryEstimated):
-                aligned.traj_est_matched_aligned.format.rotation_error_representation = rot_err_rep # ErrorRepresentationType.theta_R
+                aligned.traj_est_matched_aligned.format.rotation_error_representation = rot_err_rep  # ErrorRepresentationType.theta_R
         if isinstance(est_err_type, EstimationErrorType) and est_err_type is not EstimationErrorType.none:
-            traj_err_tpye = TrajectoryErrorType(est_err_type)
+            traj_err_type = TrajectoryErrorType(est_err_type)
             if isinstance(aligned.traj_est_matched_aligned, TrajectoryEstimated):
-                aligned.traj_est_matched_aligned.format.estimation_error_type = est_err_type # EstimationErrorType.type5
+                aligned.traj_est_matched_aligned.format.estimation_error_type = est_err_type  # EstimationErrorType.type5
                 aligned.traj_est_matched_aligned.convert_to_global_covariance()
 
         if verbose:
@@ -97,10 +107,9 @@ class TrajectoryEvaluation:
         if verbose:
             print("* TrajectoryEvaluation(): Aligned Trajectories saved!")
 
-
         ATE = AbsoluteTrajectoryError(traj_est=aligned.traj_est_matched_aligned,
                                       traj_gt=aligned.traj_gt_matched,
-                                      traj_err_type=traj_err_tpye)
+                                      traj_err_type=traj_err_type)
         self.report.ARMSE_p, self.report.ARMSE_R = ATE.traj_err.get_ARMSE()
         ATE.traj_err.save_to_CSV(result_dir + '/' + prefix + 'err_matched_aligned.csv')
         if verbose:
@@ -114,7 +123,7 @@ class TrajectoryEvaluation:
                 print("* TrajectoryEvaluation(): ETE computed!")
 
             NEES = TrajectoryPosOrientNEES(traj_est=aligned.traj_est_matched_aligned, traj_err=ETE.traj_est_err)
-            self.report.ANEES_p, self.report.ANEES_R =  NEES.get_avg_NEES()
+            self.report.ANEES_p, self.report.ANEES_R = NEES.get_avg_NEES()
             NEES.save_to_CSV(result_dir + '/' + prefix + 'nees_matched_aligned.csv')
             if verbose:
                 print("* TrajectoryEvaluation(): NEES computed!")
@@ -127,7 +136,7 @@ class TrajectoryEvaluation:
             fn_ATE = ""
             fn_NEES = ""
             fn_Multi = ""
-            fn_Timestamps =""
+            fn_Timestamps = ""
 
             if save_plot:
                 fn_NEES = result_dir + '/' + prefix + 'NEES.jpg'
@@ -141,19 +150,23 @@ class TrajectoryEvaluation:
 
             assoc.plot_timestamps(cfg=TrajectoryPlotConfig(show=show_plot, close_figure=False, save_fn=fn_Timestamps))
 
-
             TrajectoryPlotter.multi_plot_3D(traj_list=[gt_matched, est_matched, aligned.traj_est_matched_aligned],
-                                            cfg=TrajectoryPlotConfig(show=show_plot, close_figure=False, save_fn=fn_Multi),
+                                            cfg=TrajectoryPlotConfig(show=show_plot, close_figure=False,
+                                                                     save_fn=fn_Multi),
                                             name_list=['gt_matched', 'est_matched', 'est_matched_aligned'])
 
             if ETE:
-                TrajectoryPlotter.plot_pose_err_cov(traj_gt=gt_matched, traj_est= aligned.traj_est_matched_aligned, traj_err=ATE.traj_err,
-                                                    cfg=TrajectoryPlotConfig(show=show_plot, close_figure=False, radians=False,
+                TrajectoryPlotter.plot_pose_err_cov(traj_gt=gt_matched, traj_est=aligned.traj_est_matched_aligned,
+                                                    traj_err=ATE.traj_err,
+                                                    cfg=TrajectoryPlotConfig(show=show_plot, close_figure=False,
+                                                                             radians=False,
                                                                              plot_type=TrajectoryPlotTypes.plot_2D_over_t,
                                                                              save_fn=fn_ATE))
             else:
-                TrajectoryPlotter.plot_pose_err(traj_gt=gt_matched, traj_est= aligned.traj_est_matched_aligned, traj_err=ATE.traj_err,
-                                                cfg=TrajectoryPlotConfig(show=show_plot, close_figure=False, radians=False,
+                TrajectoryPlotter.plot_pose_err(traj_gt=gt_matched, traj_est=aligned.traj_est_matched_aligned,
+                                                traj_err=ATE.traj_err,
+                                                cfg=TrajectoryPlotConfig(show=show_plot, close_figure=False,
+                                                                         radians=False,
                                                                          plot_type=TrajectoryPlotTypes.plot_2D_over_t,
                                                                          save_fn=fn_ATE))
 
@@ -163,7 +176,6 @@ class TrajectoryEvaluation:
 
             if verbose:
                 print("* TrajectoryEvaluation(): Plotting performed!")
-
 
 
 def main():
@@ -178,19 +190,20 @@ def main():
 
     parser.add_argument('--alignment_type', help='Estimation error type', choices=TrajectoryAlignmentTypes.list(),
                         default=str(TrajectoryAlignmentTypes.none))
-    parser.add_argument('--num_aligned_samples',help='number of aligned sampled', default=0)
-    parser.add_argument('--max_timestamp_difference', help='Max difference between associated timestampes (t_gt - t_est)', default=0.01)
+    parser.add_argument('--num_aligned_samples', help='number of aligned sampled', default=0)
+    parser.add_argument('--max_timestamp_difference',
+                        help='Max difference between associated timestampes (t_gt - t_est)', default=0.01)
     parser.add_argument('--subsample', help='subsampling factor for input data (CSV)', default=0)
     parser.add_argument('--est_err_type', help='Estimation error type', choices=EstimationErrorType.list(),
                         default=str(EstimationErrorType.type5))
-    parser.add_argument('--rot_err_rep', help='Rotation Error representation type', choices=ErrorRepresentationType.list(),
+    parser.add_argument('--rot_err_rep', help='Rotation Error representation type',
+                        choices=ErrorRepresentationType.list(),
                         default=str(ErrorRepresentationType.theta_R))
     parser.add_argument('--plot', action='store_true', default=False)
     parser.add_argument('--save_plot', action='store_true', default=False)
     parser.add_argument('--show_plot', action='store_true', default=False)
     parser.add_argument('--relative_timestamp', action='store_true', default=False)
     parser.add_argument('--verbose', action='store_true', default=False)
-
 
     tp_start = time.time()
     args = parser.parse_args()
