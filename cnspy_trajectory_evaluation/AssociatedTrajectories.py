@@ -23,6 +23,7 @@ import os
 from sys import version_info
 
 import numpy as np
+import pandas
 from matplotlib import pyplot as plt
 
 from cnspy_csv2dataframe.CSV2DataFrame import CSV2DataFrame
@@ -45,19 +46,29 @@ class AssociatedTrajectories:
 
     matches_est_gt = None  # list of tuples containing [(idx_est, idx_gt), ...]
 
-    def __init__(self, fn_gt, fn_est, relative_timestamps=False, max_difference=0.02, subsample=0, verbose=False):
-        assert (os.path.exists(fn_gt)), str("Path to fn_gt does not exist!:" + str(fn_gt))
-        assert (os.path.exists((fn_est))), str("Path to fn_est does not exist!:" + str(fn_est))
+    def __init__(self, fn_gt: str = "", fn_est: str = "", relative_timestamps=False, max_difference=0.02, subsample=0,
+                 verbose=False,
+                 df_gt=None,
+                 df_est=None):
 
-        self.csv_df_gt = CSV2DataFrame(fn=fn_gt)
-        assert (self.csv_df_gt.data_loaded)
-        self.csv_df_est = CSV2DataFrame(fn=fn_est)
-        assert (self.csv_df_est.data_loaded)
+        if df_gt is not None and isinstance(df_gt, CSV2DataFrame):
+            self.csv_df_gt = df_gt
+        else:
+            assert (os.path.exists(fn_gt)), str("Path to fn_gt does not exist!:" + str(fn_gt))
+            self.csv_df_gt = CSV2DataFrame(fn=fn_gt)
+            assert self.csv_df_gt.data_loaded
+
+        if df_est is not None and isinstance(df_gt, CSV2DataFrame):
+            self.csv_df_est = df_est
+        else:
+            assert (os.path.exists(fn_est)), str("Path to fn_est does not exist!:" + str(fn_est))
+            self.csv_df_est = CSV2DataFrame(fn=fn_est)
+            assert self.csv_df_est.data_loaded
 
         if subsample > 1:
             subsample = round(subsample, 0)
             self.csv_df_gt.subsample(step=subsample, verbose=verbose)
-            self.csv_df_est.subsample( step=subsample, verbose=verbose)
+            self.csv_df_est.subsample(step=subsample, verbose=verbose)
 
         if version_info[0] < 3:
             t_vec_gt = self.csv_df_gt.data_frame.as_matrix(['t'])
@@ -76,12 +87,10 @@ class AssociatedTrajectories:
                 self.csv_df_gt.data_frame[['t']] = self.csv_df_gt.data_frame[['t']] - t_zero
                 self.csv_df_est.data_frame[['t']] = self.csv_df_est.data_frame[['t']] - t_zero
 
-
         if relative_timestamps:
             # only relative time stamps:
             t_vec_gt = t_vec_gt - t_zero
             t_vec_est = t_vec_est - t_zero
-
 
         idx_est, idx_gt, t_est_matched, t_gt_matched = TimestampAssociation.associate_timestamps(
             t_vec_est,
@@ -90,7 +99,6 @@ class AssociatedTrajectories:
             round_decimals=6,
             unique_timestamps=True)
 
-
         self.data_frame_est_matched = self.csv_df_est.data_frame.loc[idx_est, :]
         self.data_frame_gt_matched = self.csv_df_gt.data_frame.loc[idx_gt, :]
         self.matches_est_gt = zip(idx_est, idx_gt)
@@ -98,13 +106,12 @@ class AssociatedTrajectories:
         if verbose:
             print("AssociatedTrajectories(): {} timestamps associated.".format(len(idx_est)))
 
-
         # using zip() and * operator to
         # perform Unzipping
         # res = list(zip(*test_list))
 
     def plot_timestamps(self, cfg=TrajectoryPlotConfig(), fig=None, ax=None, colors=['r', 'g'], labels=['gt', 'est'],
-                    ls_vec=[PlotLineStyle(linestyle='-'), PlotLineStyle(linestyle='-.')]):
+                        ls_vec=[PlotLineStyle(linestyle='-'), PlotLineStyle(linestyle='-.')]):
         assert (isinstance(cfg, TrajectoryPlotConfig))
         if fig is None:
             fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
@@ -152,7 +159,7 @@ class AssociatedTrajectories:
         if self.csv_df_est.format.has_uncertainty():
             return TrajectoryEstimated(df=self.data_frame_est_matched), Trajectory(df=self.data_frame_gt_matched)
         else:
-            return Trajectory(df=self.data_frame_est_matched,fmt=self.csv_df_est.format), \
+            return Trajectory(df=self.data_frame_est_matched, fmt=self.csv_df_est.format), \
                    Trajectory(df=self.data_frame_gt_matched, fmt=self.csv_df_gt.format)
 
     @staticmethod
@@ -167,10 +174,10 @@ class AssociatedTrajectories:
             for i in range(len(traj_other_arr)):
                 traj_i = traj_other_arr[i]
                 assert isinstance(traj_i, TrajectoryBase)
-                indices_gt_matched, t_gt_matched  = traj_i.sample_at_t_arr(traj_reference.t_vec,
-                                                                              max_difference=max_difference,
-                                                                              round_decimals=round_decimals,
-                                                                              unique_timestamps=unique_timestamps)
+                indices_gt_matched, t_gt_matched = traj_i.sample_at_t_arr(traj_reference.t_vec,
+                                                                          max_difference=max_difference,
+                                                                          round_decimals=round_decimals,
+                                                                          unique_timestamps=unique_timestamps)
 
                 common_gt_indices = np.intersect1d(common_gt_indices, indices_gt_matched)
 
@@ -182,8 +189,8 @@ class AssociatedTrajectories:
                 traj_i = traj_other_arr[i]
                 assert isinstance(traj_i, TrajectoryBase)
                 traj_i.sample_at_t_arr(traj_reference.t_vec,
-                                           max_difference=max_difference,
-                                           round_decimals=round_decimals,
-                                           unique_timestamps=unique_timestamps)
+                                       max_difference=max_difference,
+                                       round_decimals=round_decimals,
+                                       unique_timestamps=unique_timestamps)
         else:
             print("AssociatedTrajectories.associate_trajectories: expected a list of trajectories!")
