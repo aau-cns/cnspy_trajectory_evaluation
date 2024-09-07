@@ -25,18 +25,13 @@ import pandas as pandas
 from spatialmath import base
 
 from cnspy_spatial_csv_formats.ErrorRepresentationType import ErrorRepresentationType
-from cnspy_spatial_csv_formats.EstimationErrorType import EstimationErrorType
-from cnspy_trajectory.SpatialConverter import SpatialConverter
+from cnspy_trajectory.PlotLineStyle import PlotLineStyle
 from cnspy_trajectory.Trajectory import Trajectory
 from cnspy_trajectory.TrajectoryBase import TrajectoryBase
 from cnspy_trajectory.TrajectoryEstimationError import TrajectoryEstimationError
-from cnspy_trajectory.TrajectoryError import TrajectoryError
-from cnspy_trajectory.TrajectoryPlotUtils import TrajectoryPlotUtils
-from cnspy_trajectory.TrajectoryPlotter import TrajectoryPlotter
+
 from cnspy_trajectory.TrajectoryPlotConfig import TrajectoryPlotConfig
 from cnspy_trajectory.TrajectoryEstimated import TrajectoryEstimated
-from cnspy_trajectory.PlotLineStyle import PlotLineStyle
-from scipy.stats.distributions import chi2
 from cnspy_trajectory_evaluation.NEES import toNEES_arr, ax_plot_nees
 
 import matplotlib.pyplot as plt
@@ -51,14 +46,12 @@ import matplotlib.pyplot as plt
 from cnspy_trajectory_evaluation.EstimationTrajectoryError import EstimationTrajectoryError
 
 
-class TrajectoryPosOrientNEES(TrajectoryBase):
-    NEES_p_vec = None
-    NEES_R_vec = None
+class TrajectoryPoseNEES(TrajectoryBase):
+    NEES_T_vec = None
     num_run = 0
     # private metrics:
     # force access to average NEES via method get_avg_NEES()!
-    __avg_NEES_p = None
-    __avg_NEES_R = None
+    __avg_NEES = None
 
     def __init__(self, traj_est=None, traj_err=None, num_run=0, df=None, fn=None):
         TrajectoryBase.__init__(self)
@@ -75,46 +68,47 @@ class TrajectoryPosOrientNEES(TrajectoryBase):
 
             self.num_run = num_run
             self.t_vec = traj_est.t_vec
-            if traj_err.err_rep_type == ErrorRepresentationType.tau_se3:
-                Sigma_p_vec = traj_est.Sigma_T_vec[:, 0:3, 0:3]
-                Sigma_R_vec = traj_est.Sigma_T_vec[:, 3:6, 3:6]
+            N = len(traj_est.t_vec)
+            if traj_err.err_rep_type == ErrorRepresentationType.tau_se3 and traj_est.Sigma_T_vec is not None:
+                Sigma_T_vec = traj_est.Sigma_T_vec
             else:
-                Sigma_p_vec = traj_est.Sigma_p_vec
-                Sigma_R_vec = traj_est.Sigma_R_vec
+                N = len(traj_est.t_vec)
+                Sigma_T_vec = np.zeros((N, 6, 6))
+                Sigma_T_vec[:, 0:3, 0:3] = traj_est.Sigma_p_vec
+                Sigma_T_vec[:, 3:6, 3:6] = traj_est.Sigma_R_vec
 
-            self.NEES_p_vec = toNEES_arr(Sigma_p_vec, traj_err.nu_vec)
-            self.NEES_R_vec = toNEES_arr(Sigma_R_vec, traj_err.theta_vec)
+            tau_vec = np.zeros((N, 6))
+            tau_vec[:, 0:3] = traj_err.nu_vec
+            tau_vec[:, 3:6] = traj_err.theta_vec
+
+            self.NEES_T_vec = toNEES_arr(Sigma_T_vec, tau_vec)
 
     # overriding abstract method
     def subsample(self, step=None, num_max_points=None, verbose=False):
         sparse_indices = Trajectory.subsample(self, step=step, num_max_points=num_max_points, verbose=verbose)
 
-        self.NEES_p_vec = self.NEES_p_vec[sparse_indices]
-        self.NEES_R_vec = self.NEES_R_vec[sparse_indices]
+        self.NEES_T_vec = self.NEES_T_vec[sparse_indices]
         return sparse_indices
 
     # overriding abstract method
     def sample(self, indices_arr, verbose=False):
         TrajectoryBase.sample(self, indices_arr=indices_arr)
-        self.NEES_p_vec = self.NEES_p_vec[indices_arr]
-        self.NEES_R_vec = self.NEES_R_vec[indices_arr]
+        self.NEES_T_vec = self.NEES_T_vec[indices_arr]
 
     # overriding abstract method
     def clone(self):
-        obj = TrajectoryPosOrientNEES()
-        obj.NEES_p_vec = self.NEES_p_vec.copy()
-        obj.NEES_R_vec = self.NEES_R_vec.copy()
+        obj = TrajectoryPoseNEES()
+        obj.NEES_T_vec = self.NEES_T_vec.copy()
         obj.num_run = self.num_run
         return obj
 
     def get_avg_NEES(self):
-        if self.__avg_NEES_p is None:
+        if self.__avg_NEES is None:
             self.compute_avg_NEES()
-        return self.__avg_NEES_p, self.__avg_NEES_R
+        return self.__avg_NEES
 
     def compute_avg_NEES(self):
-        self.__avg_NEES_p = np.mean(self.NEES_p_vec)
-        self.__avg_NEES_R = np.mean(self.NEES_R_vec)
+        self.__avg_NEES = np.mean(self.NEES_T_vec)
 
     def plot(self, fig=None, cfg=None):
         if cfg is None:
@@ -122,50 +116,33 @@ class TrajectoryPosOrientNEES(TrajectoryBase):
         if fig is None:
             fig = plt.figure(figsize=(20, 15), dpi=int(cfg.dpi))
 
-        ax1 = fig.add_subplot(211)
-        self.plot_NEES_p(ax1=ax1, relative_time=cfg.relative_time)
+        ax1 = fig.add_subplot(111)
+        self.plot_NEES(ax1=ax1, relative_time=cfg.relative_time)
         ax1.grid()
-        ax2 = fig.add_subplot(212)
-        self.plot_NEES_R(ax2=ax2, relative_time=cfg.relative_time)
-        ax2.grid()
 
         TrajectoryPlotConfig.show_save_figure(cfg, fig)
 
-    def plot_NEES_p(self, ax1, conf_ival=0.997, relative_time=True, ls=PlotLineStyle(), plot_intervals=True):
-        ax_plot_nees(ax1, 3, conf_ival=conf_ival,
-                     NEES_vec=self.NEES_p_vec,
+    def plot_NEES(self, ax1, conf_ival=0.997, relative_time=True,
+                  ls=PlotLineStyle()):
+        ax_plot_nees(ax1, 6, conf_ival=conf_ival,
+                     NEES_vec=self.NEES_T_vec,
                      x_linespace=self.t_vec,
                      relative_time=relative_time,
                      ls=ls,
-                     plot_intervals=plot_intervals,
-                     y_label='NEES pos')
+                     y_label='NEES SE(3)')
         ax1.legend(shadow=True, fontsize='x-small')
-
-    def plot_NEES_R(self, ax2, conf_ival=0.997, relative_time=True, ls=PlotLineStyle(), plot_intervals=True):
-        ax_plot_nees(ax2, 3, conf_ival=0.997,
-                     NEES_vec=self.NEES_R_vec,
-                     x_linespace=self.t_vec,
-                     relative_time=relative_time,
-                     ls=ls,
-                     plot_intervals=plot_intervals,
-                     y_label='NEES rot')
-        ax2.legend(shadow=True, fontsize='x-small')
 
     # overriding abstract method
     def to_DataFrame(self):
         t_rows, t_cols = self.t_vec.shape
-        p_rows, p_cols = self.NEES_p_vec.shape
-        q_rows, q_cols = self.NEES_R_vec.shape
+        p_rows, p_cols = self.NEES_T_vec.shape
         assert (t_rows == p_rows)
-        assert (t_rows == q_rows)
         assert (t_cols == 1)
         assert (p_cols == 1)
-        assert (q_cols == 1)
 
         run_vec = np.repeat(self.num_run, self.num_elems(), axis=0)
         df = pandas.DataFrame({'t': self.t_vec[:, 0],
-                               'NEES_p': self.NEES_p_vec[:, 0],
-                               'NEES_R': self.NEES_R_vec[:, 0],
+                               'NEES': self.NEES_T_vec[:, 0],
                                'num_run': run_vec.tolist()})
         return df
 
@@ -174,13 +151,11 @@ class TrajectoryPosOrientNEES(TrajectoryBase):
         assert (isinstance(df, pandas.DataFrame))
         if version_info[0] < 3:
             self.t_vec = df.as_matrix(['t'])
-            self.NEES_p_vec = df.as_matrix(['NEES_p'])
-            self.NEES_R_vec = df.as_matrix(['NEES_R'])
+            self.NEES_T_vec = df.as_matrix(['NEES'])
             num_run_vec = df.as_matrix(['num_run'])
         else:
             self.t_vec = df[['t']].to_numpy()
-            self.NEES_p_vec = df[['NEES_p']].to_numpy()
-            self.NEES_R_vec = df[['NEES_R']].to_numpy()
+            self.NEES_T_vec = df[['NEES']].to_numpy()
             num_run_vec = df[['num_run']].to_numpy()
         self.num_run = num_run_vec[0]
         pass
