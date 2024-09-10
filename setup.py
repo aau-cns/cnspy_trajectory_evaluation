@@ -40,7 +40,7 @@ setup(
                       'joblib',
                       'configparser',
                       'cnspy_numpy_utils',
-                      'cnspy_rosbag2csv>=0.2.5'
+                      'cnspy_rosbag2csv>=0.2.5',
                       'cnspy_trajectory>=0.2.8',
                       'cnspy_timestamp_association>=0.2.1',
                       ],
