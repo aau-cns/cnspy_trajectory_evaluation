@@ -12,7 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='cnspy_trajectory_evaluation',
-    version="0.2.5",
+    version="0.2.6",
     author='Roland Jung',
     author_email='roland.jung@aau.at',    
     description='Evaluation of trajectories.',
